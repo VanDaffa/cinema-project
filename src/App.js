@@ -6,7 +6,7 @@ import MovieList from "./components/MovieList";
 import Footer from "./components/Footer";
 import "./App.css";
 
-const apiKey = "d28eb2bee327de92a4a2982b3253e03d";
+const apiKey = "35eeada46fa5728ceb64a7168a04636a";
 
 function App() {
   const [movies, setMovies] = useState([]);
