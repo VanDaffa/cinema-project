@@ -19,7 +19,7 @@ const Footer = () => {
   }, []);
 
   return (
-    <footer className={isAtBottom ? "sticky-footer" : ""}>
+    <footer className={isAtBottom ? "fixed-footer" : ""}>
       <p>&copy; 2024 Your Cinema App. All rights reserved.</p>
     </footer>
   );
