@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
-import { HiMagnifyingGlass, HiXMark, HiBookmark } from "react-icons/hi2";
+import {
+  HiMagnifyingGlass,
+  HiXMark,
+  HiBars3, // Tambahan ikon Hamburger Menu
+} from "react-icons/hi2";
 
 const GENRES = [
   { id: 28, name: "Action" },
@@ -30,8 +34,9 @@ const Navbar = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // State baru buat Mobile Search
+  // State buat Mobile
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // State baru buat Hamburger Menu
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -55,6 +60,11 @@ const Navbar = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Tutup mobile menu kalau pindah halaman
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
@@ -95,16 +105,16 @@ const Navbar = () => {
   const handleSuggestionClick = (item) => {
     setShowSuggestions(false);
     setSearchTerm("");
-    setMobileSearchOpen(false); // Tutup mobile search kalau klik
+    setMobileSearchOpen(false);
     if (item.type === "genre") {
       navigate(
-        `/browse?genreId=${item.id}&genreName=${encodeURIComponent(item.name)}`,
+        `/discover?genreId=${item.id}&genreName=${encodeURIComponent(item.name)}`,
       );
     } else if (item.media_type === "movie") {
       navigate(`/movie/${item.id}`);
     } else if (item.media_type === "person") {
       navigate(
-        `/browse?actorId=${item.id}&actorName=${encodeURIComponent(item.name)}`,
+        `/discover?actorId=${item.id}&actorName=${encodeURIComponent(item.name)}`,
       );
     }
   };
@@ -114,7 +124,7 @@ const Navbar = () => {
     if (searchTerm.trim()) {
       setShowSuggestions(false);
       setMobileSearchOpen(false);
-      navigate(`/browse?q=${searchTerm}`);
+      navigate(`/discover?q=${searchTerm}`);
     }
   };
 
@@ -131,22 +141,39 @@ const Navbar = () => {
       className={`fixed top-0 w-full z-[100] transition-all duration-300 p-4 ${navbarClass}`}
     >
       <div className="container mx-auto flex items-center justify-between">
-        {/* LOGIKA TAMPILAN MOBILE: Kalau Search Aktif, Logo Hilang sementara */}
+        {/* === GRUP KIRI: LOGO & MENU TEKS (DESKTOP) === */}
         {!mobileSearchOpen && (
-          <Link
-            to="/"
-            className="text-red-600 text-2xl md:text-3xl font-bold hover:scale-105 transition-transform tracking-wider z-50"
-          >
-            CINEMAXII
-          </Link>
+          <div className="flex items-center gap-8">
+            <Link
+              to="/"
+              className="text-red-600 text-2xl md:text-3xl font-bold hover:scale-105 transition-transform tracking-wider z-50"
+            >
+              CINEMAXII
+            </Link>
+
+            {/* Menu Teks (Hanya tampil di Desktop) */}
+            <div className="hidden md:flex items-center gap-6 font-semibold text-sm lg:text-base">
+              <Link
+                to="/discover"
+                className="text-gray-300 hover:text-white hover:underline decoration-red-600 decoration-2 underline-offset-4 transition-all"
+              >
+                Discover
+              </Link>
+              <Link
+                to="/watchlist"
+                className="text-gray-300 hover:text-white hover:underline decoration-red-600 decoration-2 underline-offset-4 transition-all"
+              >
+                Watchlist
+              </Link>
+            </div>
+          </div>
         )}
 
-        {/* CONTAINER KANAN */}
+        {/* === GRUP KANAN: SEARCH BAR & TOMBOL MOBILE === */}
         <div
           className={`flex items-center gap-4 ${mobileSearchOpen ? "w-full" : ""}`}
         >
-          {/* === SEARCH BAR (Desktop & Mobile Mode) === */}
-          {/* Di Desktop selalu muncul. Di Mobile cuma muncul kalau mobileSearchOpen = true */}
+          {/* Search Bar */}
           <div
             className={`relative transition-all duration-300 ${mobileSearchOpen ? "block w-full" : "hidden md:block"}`}
             ref={searchRef}
@@ -163,25 +190,20 @@ const Navbar = () => {
                 onFocus={() =>
                   searchTerm.length > 1 && setShowSuggestions(true)
                 }
-                // Auto Focus saat mode mobile aktif
                 autoFocus={mobileSearchOpen}
                 className={`bg-gray-800/90 text-white border border-gray-600 rounded-full py-2 pl-10 focus:outline-none focus:border-red-600 transition-all placeholder-gray-400 backdrop-blur-sm 
                   ${mobileSearchOpen ? "w-full px-4" : "w-48 lg:w-64 focus:w-80 px-4"} 
                 `}
               />
-
-              {/* Ikon Kaca Pembesar (Submit) */}
               <button type="submit" className="absolute left-3 text-gray-400">
                 <HiMagnifyingGlass className="w-5 h-5" />
               </button>
-
-              {/* Tombol Close (X) */}
               {(searchTerm || mobileSearchOpen) && (
                 <button
                   type="button"
                   onClick={() => {
                     setSearchTerm("");
-                    if (mobileSearchOpen) setMobileSearchOpen(false); // Tutup mode mobile
+                    if (mobileSearchOpen) setMobileSearchOpen(false);
                   }}
                   className="absolute right-3 text-gray-400 hover:text-red-500"
                 >
@@ -190,7 +212,7 @@ const Navbar = () => {
               )}
             </form>
 
-            {/* === DROPDOWN SUGGESTIONS (Sudah Bebas Bug!) === */}
+            {/* Dropdown Suggestions */}
             {showSuggestions && suggestions.length > 0 && (
               <div className="absolute top-full mt-2 w-full bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden z-50">
                 {suggestions.map((item) => (
@@ -199,7 +221,6 @@ const Navbar = () => {
                     onClick={() => handleSuggestionClick(item)}
                     className="flex items-center p-3 hover:bg-gray-800 cursor-pointer border-b border-gray-800 last:border-0 transition-colors"
                   >
-                    {/* Tampilan Berbeda untuk Genre vs Movie/Actor */}
                     {item.type === "genre" ? (
                       <div className="flex items-center w-full">
                         <span className="w-10 h-10 flex items-center justify-center bg-red-600/20 text-red-500 rounded-full mr-3 text-lg font-bold">
@@ -214,7 +235,6 @@ const Navbar = () => {
                       </div>
                     ) : (
                       <>
-                        {/* GAMBAR POSTER / PROFIL */}
                         <img
                           src={
                             item.poster_path || item.profile_path
@@ -224,8 +244,6 @@ const Navbar = () => {
                           alt={item.title || item.name}
                           className="w-10 h-14 object-cover rounded-md mr-3 shadow-md"
                         />
-
-                        {/* TEKS INFO */}
                         <div className="flex-1 min-w-0">
                           <h4 className="text-sm font-bold text-white truncate">
                             {item.title || item.name}
@@ -253,30 +271,52 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* === TOMBOL PEMICU MOBILE (Kaca Pembesar) === */}
-          {/* Muncul cuma di HP kalau search lagi tertutup */}
+          {/* Tombol Pemicu Search (Mobile Only) */}
           {!mobileSearchOpen && (
             <button
-              onClick={() => setMobileSearchOpen(true)}
+              onClick={() => {
+                setMobileSearchOpen(true);
+                setMobileMenuOpen(false); // Tutup menu garis tiga kalau lagi buka search
+              }}
               className="md:hidden text-gray-300 hover:text-white"
             >
               <HiMagnifyingGlass className="w-7 h-7" />
             </button>
           )}
 
-          {/* === TOMBOL WATCHLIST === */}
-          {/* Sembunyikan Bookmark kalau lagi mode cari di HP biar gak sempit */}
+          {/* Tombol Hamburger Menu (Mobile Only) */}
           {!mobileSearchOpen && (
-            <Link
-              to="/watchlist"
-              className="relative group text-gray-300 hover:text-red-500 transition-colors"
-              title="My Watchlist"
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden text-gray-300 hover:text-white ml-2"
             >
-              <HiBookmark className="w-7 h-7" />
-            </Link>
+              {mobileMenuOpen ? (
+                <HiXMark className="w-8 h-8" />
+              ) : (
+                <HiBars3 className="w-8 h-8" />
+              )}
+            </button>
           )}
         </div>
       </div>
+
+      {/* === MOBILE MENU DROPDOWN (Hanya Tampil di HP & Kalau di-klik) === */}
+      {mobileMenuOpen && !mobileSearchOpen && (
+        <div className="md:hidden bg-gray-900 border-t border-gray-800 mt-4 -mx-4 px-6 py-6 flex flex-col gap-6 shadow-xl animate-fade-in-down">
+          <Link
+            to="/discover"
+            className="text-white font-semibold text-lg hover:text-red-500 transition-colors flex items-center gap-3"
+          >
+            Discover Movies
+          </Link>
+          <Link
+            to="/watchlist"
+            className="text-white font-semibold text-lg hover:text-red-500 transition-colors flex items-center gap-3"
+          >
+            My Watchlist
+          </Link>
+        </div>
+      )}
     </nav>
   );
 };

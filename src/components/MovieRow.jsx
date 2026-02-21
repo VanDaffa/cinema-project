@@ -77,7 +77,7 @@ const MovieRow = ({ title, fetchUrl, moviesData, onSelectGenre }) => {
         {!isScrolledStart && (
           <button
             onClick={slideLeft}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-40 bg-black/70 hover:bg-red-600 text-white w-10 h-10 hidden md:flex items-center justify-center transition-all opacity-0 group-hover/row:opacity-100 rounded-full shadow-lg border border-gray-600 hover:border-red-600"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-40 bg-black/70 hover:bg-red-600 text-white w-8 h-8 md:w-10 md:h-10 flex items-center justify-center transition-all rounded-full shadow-lg border border-gray-600 hover:border-red-600"
           >
             <HiChevronLeft className="w-6 h-6" />
           </button>
@@ -115,7 +115,7 @@ const MovieRow = ({ title, fetchUrl, moviesData, onSelectGenre }) => {
         {!isScrolledEnd && (
           <button
             onClick={slideRight}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-40 bg-black/70 hover:bg-red-600 text-white w-10 h-10 hidden md:flex items-center justify-center transition-all opacity-0 group-hover/row:opacity-100 rounded-full shadow-lg border border-gray-600 hover:border-red-600"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-40 bg-black/70 hover:bg-red-600 text-white w-8 h-8 md:w-10 md:h-10 flex items-center justify-center transition-all rounded-full shadow-lg border border-gray-600 hover:border-red-600"
           >
             <HiChevronRight className="w-6 h-6" />
           </button>

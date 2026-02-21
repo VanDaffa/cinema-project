@@ -101,10 +101,10 @@ const MovieDetail = () => {
   };
 
   return (
-    <div className="bg-gray-900 text-white min-h-screen pb-10">
+    <div className="bg-gray-900 text-white min-h-screen pb-10 animate-fade-in">
       <Navbar />
 
-      {/* === HERO SECTION === */}
+      {/* === HERO SECTION (Sudah Bebas Sinopsis) === */}
       <div
         className="relative w-full h-[70vh] md:h-[80vh] bg-cover bg-center"
         style={{ backgroundImage: `url(${backdropUrl})` }}
@@ -148,8 +148,8 @@ const MovieDetail = () => {
               {movie.tagline && `"${movie.tagline}"`}
             </p>
 
-            {/* BUTTONS */}
-            <div className="flex flex-wrap gap-4 mb-6">
+            {/* BUTTONS (Tetap Ada) */}
+            <div className="flex flex-wrap gap-4 mb-2">
               <button
                 onClick={handleToggleWatchlist}
                 className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all duration-300 shadow-lg group ${
@@ -177,11 +177,7 @@ const MovieDetail = () => {
               )}
             </div>
 
-            {/* FIX OCD: LINE CLAMP 3 BARIS */}
-            {/* Hanya tampilkan teaser sinopsis di Hero biar layout gak loncat */}
-            <p className="text-sm md:text-base text-gray-200 max-w-3xl leading-relaxed line-clamp-3 md:line-clamp-3 opacity-90">
-              {movie.overview}
-            </p>
+            {/* SINOPSIS DI SINI SUDAH DIHAPUS SECARA PERMANEN 🧹 */}
           </div>
         </div>
       </div>
@@ -189,10 +185,8 @@ const MovieDetail = () => {
       {/* === CONTENT SECTION === */}
       <div className="container mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
         <div className="lg:col-span-2 space-y-10">
-          {/* LOGIKA SMART STORYLINE */}
-          {/* Hanya tampilkan Storyline section jika sinopsisnya PANJANG (> 300 karakter) */}
-          {/* Kalau pendek, berarti user sudah baca semuanya di Hero Section, jadi gak perlu diulang */}
-          {movie.overview.length > 300 && (
+          {/* BAGIAN STORYLINE: Sekarang tampil 100% penuh kalau ada sinopsisnya */}
+          {movie.overview && (
             <div>
               <h2 className="text-2xl font-bold mb-4 border-l-4 border-red-600 pl-4">
                 Storyline
@@ -294,13 +288,7 @@ const MovieDetail = () => {
 
       {/* === REKOMENDASI PINTAR === */}
       <div className="container mx-auto px-4 mt-8 border-t border-gray-800 pt-8">
-        {/* Sekarang kita pakai 'moviesData' untuk kirim data hasil logika fallback */}
-        <MovieRow
-          title="Mungkin Kamu Suka"
-          moviesData={relatedMovies}
-          // Note: View All di sini kita matikan dulu atau arahkan ke genre karena URL-nya dinamis
-          // onSelectGenre={() => ...}
-        />
+        <MovieRow title="Mungkin Kamu Suka" moviesData={relatedMovies} />
       </div>
     </div>
   );

@@ -4,10 +4,10 @@ import { WatchlistProvider } from "./context/WatchlistContext"; // Import Provid
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
-import Detail from "./pages/Detail";
 import MovieDetail from "./pages/MovieDetail";
-// Import halaman baru nanti
+import Browse from "./pages/Browse";
 import WatchlistPage from "./pages/WatchlistPage";
+import Discover from "./pages/Discover";
 
 function App() {
   return (
@@ -20,11 +20,10 @@ function App() {
 
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/browse" element={<Detail />} />
             <Route path="/movie/:id" element={<MovieDetail />} />
-
-            {/* Rute Baru buat Halaman Watchlist */}
             <Route path="/watchlist" element={<WatchlistPage />} />
+            <Route path="/discover" element={<Discover />} />
+            <Route path="/browse" element={<Browse />} />
           </Routes>
 
           <Footer />

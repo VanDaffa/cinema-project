@@ -25,7 +25,7 @@ const MovieCard = ({ movie }) => {
   return (
     <div
       onClick={() => navigate(`/movie/${movie.id}`)}
-      className="relative group bg-gray-800 rounded-lg overflow-hidden shadow-lg cursor-pointer transform hover:scale-105 transition-all duration-300 ease-in-out hover:z-10"
+      className="relative group bg-gray-800 rounded-lg overflow-hidden shadow-lg cursor-pointer transform hover:scale-105 transition-all duration-300 ease-in-out hover:z-10 animate-slide-up"
     >
       {/* PERUBAHAN DI SINI:
          1. opacity-0: Defaultnya ngilang (transparan).

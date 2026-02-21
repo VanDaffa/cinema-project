@@ -2,44 +2,50 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import axios from "axios";
 import MovieList from "../components/MovieList";
-import SkeletonCard from "../components/SkeletonCard"; // Import Skeleton
+import SkeletonCard from "../components/SkeletonCard";
 
 const Detail = () => {
   const [movies, setMovies] = useState([]);
   const [title, setTitle] = useState("");
-  const [loading, setLoading] = useState(true);
 
-  // STATE PAGINATION
+  // STATE LOADING DIBAGI DUA:
+  // 1. loading: Buat loading pertama kali (muncul skeleton banyak)
+  // 2. isFetchingMore: Buat loading saat scroll ke bawah (muncul spinner kecil)
+  const [loading, setLoading] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
-  // Ambil semua parameter kemungkinan
   const query = searchParams.get("q");
   const actorId = searchParams.get("actorId");
   const actorName = searchParams.get("actorName");
-  const genreId = searchParams.get("genreId"); // Parameter Baru
-  const genreName = searchParams.get("genreName"); // Parameter Baru
+  const genreId = searchParams.get("genreId");
+  const genreName = searchParams.get("genreName");
 
   const apiKey = import.meta.env.VITE_API_KEY;
   const baseUrl = import.meta.env.VITE_BASE_URL;
 
-  // Reset page ke 1 kalau parameter pencarian berubah (misal ganti kata kunci)
+  // 1. RESET LOGIC: Kalau user ganti kata pencarian/kategori, bersihkan semuanya
   useEffect(() => {
     setPage(1);
-    setMovies([]); // Kosongkan dulu biar skeleton muncul
+    setMovies([]);
+    setTotalPages(1);
   }, [query, actorId, genreId, location.state]);
 
-  // Fetch Data Utama (Termasuk Pagination)
+  // 2. FETCH LOGIC: Ambil data dari API
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true);
+      // Tentukan tipe loading
+      if (page === 1) setLoading(true);
+      else setIsFetchingMore(true);
+
       try {
         let url = "";
 
-        // Tentukan URL berdasarkan Jenis Pencarian
         if (query) {
           setTitle(`Hasil Pencarian: "${query}"`);
           url = `${baseUrl}/search/movie?api_key=${apiKey}&query=${query}&page=${page}`;
@@ -51,33 +57,60 @@ const Detail = () => {
           url = `${baseUrl}/discover/movie?api_key=${apiKey}&with_genres=${genreId}&sort_by=popularity.desc&page=${page}`;
         } else if (location.state?.fetchUrl) {
           setTitle(location.state.title);
-          // Tambahkan &page= di ujung URL yang dikirim dari Home
           url = `${location.state.fetchUrl}&page=${page}`;
         }
 
         if (url) {
           const res = await axios.get(url);
-          setMovies(res.data.results);
+
+          // JIKA PAGE 1: Timpa data (karena ini pencarian baru)
+          // JIKA PAGE > 1: Gabungkan data lama dengan data baru (Append)
+          if (page === 1) {
+            setMovies(res.data.results);
+          } else {
+            setMovies((prevMovies) => [...prevMovies, ...res.data.results]);
+          }
+
           setTotalPages(res.data.total_pages);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
-        // Scroll ke atas setiap ganti halaman, smooth
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        setIsFetchingMore(false);
+
+        // PENTING: Hanya scroll ke atas kalau ini halaman 1 (pencarian baru)
+        if (page === 1) {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
       }
     };
 
     fetchData();
   }, [page, query, actorId, genreId, location.state, apiKey, baseUrl]);
 
-  // Fungsi Ganti Halaman
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setPage(newPage);
-    }
-  };
+  // 3. SENSOR SCROLL (INFINITE SCROLL MAGIC) 🪄
+  useEffect(() => {
+    const handleScroll = () => {
+      // Cek jarak layar saat ini dengan batas bawah dokumen
+      // Angka 500 = Kita trigger loading saat user berjarak 500px sebelum mentok bawah biar mulus
+      if (
+        window.innerHeight + window.scrollY >=
+        document.body.offsetHeight - 500
+      ) {
+        // Kalau sedang tidak loading dan halaman masih ada sisa, gas tambah page!
+        if (!loading && !isFetchingMore && page < totalPages) {
+          setPage((prevPage) => prevPage + 1);
+        }
+      }
+    };
+
+    // Pasang kuping buat dengerin event scroll
+    window.addEventListener("scroll", handleScroll);
+
+    // Bersihkan kuping kalau komponen ditutup (Cleanup)
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [loading, isFetchingMore, page, totalPages]); // Dependency array penting biar state-nya update
 
   return (
     <div className="bg-gray-900 text-white min-h-screen pt-24 px-4 pb-10">
@@ -85,10 +118,9 @@ const Detail = () => {
         {title}
       </h2>
 
-      {/* KONDISI LOADING: Tampilkan Skeleton */}
+      {/* LOADING AWAL: Skeleton 10 biji */}
       {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          {/* Buat Array kosong isi 10 buat looping skeleton */}
           {[...Array(10)].map((_, i) => (
             <SkeletonCard key={i} />
           ))}
@@ -97,29 +129,19 @@ const Detail = () => {
         <>
           <MovieList movies={movies} />
 
-          {/* TOMBOL PAGINATION */}
-          <div className="flex justify-center items-center mt-10 gap-4">
-            <button
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page === 1}
-              className="px-4 py-2 bg-gray-800 rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              Previous
-            </button>
+          {/* LOADING SCROLL: Muncul di paling bawah pas lagi ngambil data */}
+          {isFetchingMore && (
+            <div className="flex justify-center items-center py-8">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-600"></div>
+            </div>
+          )}
 
-            <span className="text-gray-400">
-              Page <span className="text-white font-bold">{page}</span> of{" "}
-              {totalPages}
-            </span>
-
-            <button
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page === totalPages}
-              className="px-4 py-2 bg-gray-800 rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              Next
-            </button>
-          </div>
+          {/* INDIKATOR HABIS: Kalau user rajin scroll sampai halaman terakhir */}
+          {!isFetchingMore && page >= totalPages && (
+            <div className="text-center py-10 text-gray-500">
+              <p>Sudah mencapai ujung dunia perfilman! 🎬</p>
+            </div>
+          )}
         </>
       ) : (
         <div className="text-center mt-20 text-gray-500">
