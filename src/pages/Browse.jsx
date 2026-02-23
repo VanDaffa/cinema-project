@@ -20,6 +20,10 @@ const Browse = () => {
   const genreId = searchParams.get("genreId");
   const title = searchParams.get("title") || "Daftar Film";
 
+  const querySearch = searchParams.get("q");
+  const movieId = searchParams.get("movieId");
+  const personId = searchParams.get("personId");
+
   const [movies, setMovies] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -34,7 +38,11 @@ const Browse = () => {
   const apiKey = import.meta.env.VITE_API_KEY;
   const baseUrl = import.meta.env.VITE_BASE_URL;
 
-  const supportsSorting = type === "genre" || type === "korean";
+  const supportsSorting =
+    type === "genre" ||
+    type === "korean" ||
+    type === "anime_jp" ||
+    type === "person";
 
   // Tutup dropdown kalau klik di luar
   useEffect(() => {
@@ -66,6 +74,9 @@ const Browse = () => {
           url = `${baseUrl}/discover/movie?api_key=${apiKey}&with_genres=${genreId}&sort_by=${sortBy}&page=${page}`;
         } else if (type === "korean") {
           url = `${baseUrl}/discover/movie?api_key=${apiKey}&with_original_language=ko&sort_by=${sortBy}&page=${page}`;
+        } else if (type === "anime_jp") {
+          // TAMBAHAN BARU: Jalur khusus Anime Jepang
+          url = `${baseUrl}/discover/movie?api_key=${apiKey}&with_genres=16&with_original_language=ja&sort_by=${sortBy}&page=${page}`;
         } else if (type === "trending") {
           url = `${baseUrl}/trending/movie/week?api_key=${apiKey}&page=${page}`;
         } else if (type === "now_playing") {
@@ -74,6 +85,12 @@ const Browse = () => {
           url = `${baseUrl}/movie/upcoming?api_key=${apiKey}&page=${page}`;
         } else if (type === "top_rated") {
           url = `${baseUrl}/movie/top_rated?api_key=${apiKey}&page=${page}`;
+        } else if (type === "search") {
+          url = `${baseUrl}/search/movie?api_key=${apiKey}&query=${querySearch}&page=${page}`;
+        } else if (type === "recommendations") {
+          url = `${baseUrl}/movie/${movieId}/recommendations?api_key=${apiKey}&page=${page}`;
+        } else if (type === "person") {
+          url = `${baseUrl}/discover/movie?api_key=${apiKey}&with_cast=${personId}&sort_by=${sortBy}&page=${page}`;
         }
 
         if (url) {

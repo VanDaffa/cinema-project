@@ -4,8 +4,13 @@ import axios from "axios";
 import {
   HiMagnifyingGlass,
   HiXMark,
-  HiBars3, // Tambahan ikon Hamburger Menu
+  HiBars3,
+  HiArrowRightOnRectangle,
 } from "react-icons/hi2";
+
+// === IMPORT FIREBASE ===
+import { auth, provider } from "../firebase";
+import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
 
 const GENRES = [
   { id: 28, name: "Action" },
@@ -34,17 +39,48 @@ const Navbar = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // State buat Mobile
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // State baru buat Hamburger Menu
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // === STATE UNTUK USER LOGIN ===
+  const [user, setUser] = useState(null);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
   const searchRef = useRef(null);
+  const userMenuRef = useRef(null);
 
   const apiKey = import.meta.env.VITE_API_KEY;
   const baseUrl = import.meta.env.VITE_BASE_URL;
 
+  // === MEMANTAU STATUS LOGIN ===
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // === FUNGSI LOGIN & LOGOUT ===
+  const handleLogin = async () => {
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Gagal Login:", error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setShowUserMenu(false);
+    } catch (error) {
+      console.error("Gagal Logout:", error);
+    }
+  };
+
+  // Efek Scroll & Klik di Luar Element
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 0);
     window.addEventListener("scroll", handleScroll);
@@ -56,16 +92,19 @@ const Navbar = () => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setShowSuggestions(false);
       }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setShowUserMenu(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Tutup mobile menu kalau pindah halaman
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
 
+  // Logika Pencarian (Tetap Sama)
   useEffect(() => {
     const delayDebounceFn = setTimeout(async () => {
       if (searchTerm.length > 1) {
@@ -108,14 +147,12 @@ const Navbar = () => {
     setMobileSearchOpen(false);
     if (item.type === "genre") {
       navigate(
-        `/discover?genreId=${item.id}&genreName=${encodeURIComponent(item.name)}`,
+        `/browse?type=genre&genreId=${item.id}&title=${encodeURIComponent(item.name)}`,
       );
     } else if (item.media_type === "movie") {
       navigate(`/movie/${item.id}`);
     } else if (item.media_type === "person") {
-      navigate(
-        `/discover?actorId=${item.id}&actorName=${encodeURIComponent(item.name)}`,
-      );
+      navigate(`/person/${item.id}`);
     }
   };
 
@@ -124,7 +161,9 @@ const Navbar = () => {
     if (searchTerm.trim()) {
       setShowSuggestions(false);
       setMobileSearchOpen(false);
-      navigate(`/discover?q=${searchTerm}`);
+      navigate(
+        `/browse?type=search&q=${encodeURIComponent(searchTerm)}&title=${encodeURIComponent("Hasil Pencarian: " + searchTerm)}`,
+      );
     }
   };
 
@@ -141,7 +180,7 @@ const Navbar = () => {
       className={`fixed top-0 w-full z-[100] transition-all duration-300 p-4 ${navbarClass}`}
     >
       <div className="container mx-auto flex items-center justify-between">
-        {/* === GRUP KIRI: LOGO & MENU TEKS (DESKTOP) === */}
+        {/* === GRUP KIRI: LOGO & MENU TEKS === */}
         {!mobileSearchOpen && (
           <div className="flex items-center gap-8">
             <Link
@@ -151,7 +190,6 @@ const Navbar = () => {
               CINEMAXII
             </Link>
 
-            {/* Menu Teks (Hanya tampil di Desktop) */}
             <div className="hidden md:flex items-center gap-6 font-semibold text-sm lg:text-base">
               <Link
                 to="/discover"
@@ -169,11 +207,11 @@ const Navbar = () => {
           </div>
         )}
 
-        {/* === GRUP KANAN: SEARCH BAR & TOMBOL MOBILE === */}
+        {/* === GRUP KANAN: SEARCH, LOGIN, & TOMBOL MOBILE === */}
         <div
           className={`flex items-center gap-4 ${mobileSearchOpen ? "w-full" : ""}`}
         >
-          {/* Search Bar */}
+          {/* Search Bar (Tetap Sama) */}
           <div
             className={`relative transition-all duration-300 ${mobileSearchOpen ? "block w-full" : "hidden md:block"}`}
             ref={searchRef}
@@ -212,7 +250,7 @@ const Navbar = () => {
               )}
             </form>
 
-            {/* Dropdown Suggestions */}
+            {/* Dropdown Suggestions (Tetap Sama) */}
             {showSuggestions && suggestions.length > 0 && (
               <div className="absolute top-full mt-2 w-full bg-gray-900 border border-gray-700 rounded-xl shadow-2xl overflow-hidden z-50">
                 {suggestions.map((item) => (
@@ -258,9 +296,6 @@ const Navbar = () => {
                                 Movie
                               </span>
                             )}
-                            {item.release_date && (
-                              <span>• {item.release_date.split("-")[0]}</span>
-                            )}
                           </p>
                         </div>
                       </>
@@ -271,12 +306,64 @@ const Navbar = () => {
             )}
           </div>
 
+          {/* === BAGIAN AUTENTIKASI (LOGIN / PROFIL) === */}
+          {!mobileSearchOpen && (
+            <div className="hidden md:block relative" ref={userMenuRef}>
+              {user ? (
+                // Jika sudah login: Tampilkan Foto Profil
+                <div>
+                  <img
+                    // Kita kasih fallback kalau photoURL kosong/gagal
+                    src={
+                      user.photoURL ||
+                      `https://ui-avatars.com/api/?name=${user.displayName}&background=random`
+                    }
+                    alt="Profile"
+                    referrerPolicy="no-referrer" // MANTRA SAKTI ANTI BLOKIR GOOGLE
+                    className="w-10 h-10 rounded-full cursor-pointer border-2 border-transparent hover:border-red-600 transition-all object-cover"
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                    // Jika URL foto ada tapi linknya rusak (error), ganti ke inisial
+                    onError={(e) => {
+                      e.target.src = `https://ui-avatars.com/api/?name=${user.displayName}&background=B91C1C&color=fff`;
+                    }}
+                  />
+                  {showUserMenu && (
+                    <div className="absolute right-0 mt-3 w-48 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl py-2 z-50 animate-fade-in-down origin-top-right">
+                      <div className="px-4 py-2 border-b border-gray-700 mb-2">
+                        <p className="text-sm text-white font-bold truncate">
+                          {user.displayName}
+                        </p>
+                        <p className="text-xs text-gray-400 truncate">
+                          {user.email}
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-800 hover:text-red-400 font-semibold flex items-center gap-2 transition-colors"
+                      >
+                        <HiArrowRightOnRectangle className="w-5 h-5" /> Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // Jika belum login: Tampilkan Tombol Login
+                <button
+                  onClick={handleLogin}
+                  className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full transition-colors shadow-lg"
+                >
+                  Login
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Tombol Pemicu Search (Mobile Only) */}
           {!mobileSearchOpen && (
             <button
               onClick={() => {
                 setMobileSearchOpen(true);
-                setMobileMenuOpen(false); // Tutup menu garis tiga kalau lagi buka search
+                setMobileMenuOpen(false);
               }}
               className="md:hidden text-gray-300 hover:text-white"
             >
@@ -300,18 +387,54 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* === MOBILE MENU DROPDOWN (Hanya Tampil di HP & Kalau di-klik) === */}
+      {/* === MOBILE MENU DROPDOWN === */}
       {mobileMenuOpen && !mobileSearchOpen && (
         <div className="md:hidden bg-gray-900 border-t border-gray-800 mt-4 -mx-4 px-6 py-6 flex flex-col gap-6 shadow-xl animate-fade-in-down">
+          {/* Info User di Mobile */}
+          {user ? (
+            <div className="flex items-center gap-4 border-b border-gray-700 pb-4">
+              <img
+                src={
+                  user.photoURL ||
+                  `https://ui-avatars.com/api/?name=${user.displayName}&background=random`
+                }
+                alt="Profile"
+                referrerPolicy="no-referrer" // MANTRA SAKTI DI MOBILE JUGA
+                className="w-12 h-12 rounded-full border border-gray-600 object-cover"
+                onError={(e) => {
+                  e.target.src = `https://ui-avatars.com/api/?name=${user.displayName}&background=B91C1C&color=fff`;
+                }}
+              />
+              <div>
+                <p className="text-white font-bold text-lg">
+                  {user.displayName}
+                </p>
+                <button
+                  onClick={handleLogout}
+                  className="text-red-500 text-sm font-semibold mt-1"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={handleLogin}
+              className="bg-red-600 text-white font-bold py-3 rounded-lg text-center shadow-lg w-full"
+            >
+              Login with Google
+            </button>
+          )}
+
           <Link
             to="/discover"
-            className="text-white font-semibold text-lg hover:text-red-500 transition-colors flex items-center gap-3"
+            className="text-white font-semibold text-lg hover:text-red-500 transition-colors"
           >
             Discover Movies
           </Link>
           <Link
             to="/watchlist"
-            className="text-white font-semibold text-lg hover:text-red-500 transition-colors flex items-center gap-3"
+            className="text-white font-semibold text-lg hover:text-red-500 transition-colors"
           >
             My Watchlist
           </Link>

@@ -8,6 +8,7 @@ import MovieDetail from "./pages/MovieDetail";
 import Browse from "./pages/Browse";
 import WatchlistPage from "./pages/WatchlistPage";
 import Discover from "./pages/Discover";
+import PersonDetail from "./pages/PersonDetail";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="/watchlist" element={<WatchlistPage />} />
             <Route path="/discover" element={<Discover />} />
             <Route path="/browse" element={<Browse />} />
+            <Route path="/person/:id" element={<PersonDetail />} />
           </Routes>
 
           <Footer />

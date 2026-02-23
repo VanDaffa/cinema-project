@@ -22,6 +22,7 @@ const Home = () => {
     romance: `${baseUrl}/discover/movie?api_key=${apiKey}&with_genres=10749`,
     scifi: `${baseUrl}/discover/movie?api_key=${apiKey}&with_genres=878`,
     anime: `${baseUrl}/discover/movie?api_key=${apiKey}&with_genres=16`,
+    animeJepang: `${baseUrl}/discover/movie?api_key=${apiKey}&with_genres=16&with_original_language=ja`,
     mystery: `${baseUrl}/discover/movie?api_key=${apiKey}&with_genres=9648`,
     korean: `${baseUrl}/discover/movie?api_key=${apiKey}&with_original_language=ko`,
   };
@@ -42,12 +43,16 @@ const Home = () => {
       navigate(
         `/browse?type=genre&genreId=${value}&title=${encodeURIComponent(customTitle)}`,
       );
-    } else if (type === "korean") {
-      navigate(`/browse?type=korean&title=${encodeURIComponent(customTitle)}`);
-    } else {
-      // Untuk trending, now_playing, upcoming, top_rated
+    } else if (type === "special") {
       navigate(
         `/browse?type=${value}&title=${encodeURIComponent(customTitle)}`,
+      );
+    } else if (type === "korean") {
+      navigate(`/browse?type=korean&title=${encodeURIComponent(customTitle)}`);
+    } else if (type === "anime_jp") {
+      // TAMBAHAN BARU
+      navigate(
+        `/browse?type=anime_jp&title=${encodeURIComponent(customTitle)}`,
       );
     }
   };
@@ -82,9 +87,16 @@ const Home = () => {
 
         {/* === SEGMEN 2: GENRE FAVORIT === */}
         <MovieRow
-          title="🎌 Anime & Animasi"
+          title="🌸 Mahakarya Anime Jepang"
+          fetchUrl={requests.animeJepang}
+          onSelectGenre={() =>
+            handleViewAll("anime_jp", null, "Mahakarya Anime Jepang")
+          }
+        />
+        <MovieRow
+          title="🌍 Animasi Global (Barat & Lainnya)"
           fetchUrl={requests.anime}
-          onSelectGenre={() => handleViewAll("genre", 16, "Anime & Animasi")}
+          onSelectGenre={() => handleViewAll("genre", 16, "Animasi Global")}
         />
         <MovieRow
           title="💥 Action & Petualangan"

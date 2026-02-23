@@ -1,71 +1,67 @@
 import React from "react";
-import { useNavigate } from "react-router-dom"; // Import ini buat pindah halaman
-import { HiPlay, HiInformationCircle } from "react-icons/hi2"; // Import Ikon kece
+import { useNavigate } from "react-router-dom";
+// 1. KITA KEMBALIKAN IMPORT IKONNYA DI SINI
+import { HiPlay, HiOutlineInformationCircle } from "react-icons/hi2";
 
 const Hero = ({ movie }) => {
   const navigate = useNavigate();
 
-  // Kalau data belum loading, jangan tampilkan apa-apa
-  if (!movie) return null;
-
-  const backdropUrl = `https://image.tmdb.org/t/p/original${movie.backdrop_path}`;
-
-  // Fungsi buat pindah ke halaman detail
-  const handleNavigate = () => {
-    navigate(`/movie/${movie.id}`);
-  };
-
   return (
-    // Height kita set 70% - 80% dari layar biar immersive
-    <div
-      className="relative w-full h-[70vh] md:h-[80vh] bg-cover bg-center mb-8"
-      style={{ backgroundImage: `url(${backdropUrl})` }}
-    >
-      {/* Overlay Gelap (Gradient dari bawah & samping kiri) */}
-      <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/40 to-transparent"></div>
-      <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent"></div>
+    <div className="w-full h-[70vh] md:h-[85vh] text-white relative">
+      <div className="w-full h-full">
+        {/* GAMBAR BACKGROUND */}
+        <img
+          className="w-full h-full object-cover object-top"
+          src={`https://image.tmdb.org/t/p/original${movie?.backdrop_path}`}
+          alt={movie?.title}
+        />
 
-      {/* Konten Teks */}
-      <div className="absolute bottom-0 left-0 p-8 md:p-12 w-full md:w-2/3 lg:w-1/2 flex flex-col justify-end h-full">
-        <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg leading-tight">
-          {movie.title}
-        </h1>
+        {/* === LAPISAN GRADIENT (EFEK ESTETIKA) === */}
+        <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/70 to-transparent"></div>
+        <div className="absolute bottom-0 w-full h-[30vh] bg-gradient-to-t from-gray-900 to-transparent z-10"></div>
 
-        {/* Metadata kecil */}
-        <div className="flex items-center space-x-4 mb-4 text-sm text-gray-300 font-medium">
-          <span className="text-green-400 font-bold">New Release</span>
-          <span className="border border-gray-500 px-1 rounded text-xs">
-            HD
-          </span>
-          <span className="text-yellow-400">
-            ⭐ {movie.vote_average ? movie.vote_average.toFixed(1) : "N/A"}
-          </span>
-          <span>{movie.release_date?.split("-")[0]}</span>
-        </div>
-
-        <p className="text-gray-200 text-lg line-clamp-3 mb-8 drop-shadow-md max-w-xl">
-          {movie.overview}
-        </p>
-
-        {/* === TOMBOL PLAY & MORE INFO === */}
-        <div className="flex space-x-4">
-          {/* Tombol Play Now (Warna Putih/Merah Menonjol) */}
-          <button
-            onClick={handleNavigate}
-            className="bg-white hover:bg-white/90 text-black font-bold py-3 px-8 rounded flex items-center transition duration-300 gap-2 shadow-lg group"
+        {/* === KONTEN HERO === */}
+        {/* 👇👇👇 TUAS KENDALI KETINGGIAN ADA DI SINI 👇👇👇 */}
+        {/* Coba ubah bottom-[10%] jadi bottom-[5%] atau bottom-4 untuk menurunkannya */}
+        <div className="absolute w-full bottom-[5%] md:bottom-[8%] p-4 md:p-8 flex flex-col gap-4 z-20">
+          {/* JUDUL FILM */}
+          <h1
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-snug pb-2 line-clamp-2 md:line-clamp-3 w-full md:max-w-[70%]"
+            title={movie?.title}
           >
-            <HiPlay className="w-7 h-7 group-hover:scale-110 transition-transform" />
-            Play Now
-          </button>
+            {movie?.title}
+          </h1>
 
-          {/* Tombol More Info (Transparan/Blur Effect) */}
-          <button
-            onClick={handleNavigate}
-            className="bg-gray-500/40 hover:bg-gray-500/60 text-white font-bold py-3 px-8 rounded flex items-center transition duration-300 gap-2 backdrop-blur-sm border border-white/20"
-          >
-            <HiInformationCircle className="w-7 h-7" />
-            More Info
-          </button>
+          {/* METADATA FILM */}
+          <div className="flex items-center gap-3 text-xs md:text-sm font-semibold text-gray-300">
+            <span className="text-green-400">New Release</span>
+            <span className="border border-gray-400 px-1 rounded">HD</span>
+            <span className="flex items-center text-yellow-400">
+              ⭐ {movie?.vote_average?.toFixed(1)}
+            </span>
+            <span>{movie?.release_date?.split("-")[0]}</span>
+          </div>
+
+          {/* SINOPSIS */}
+          <p className="w-full md:max-w-[70%] lg:max-w-[50%] text-gray-300 text-sm md:text-base leading-relaxed line-clamp-3 md:line-clamp-4">
+            {movie?.overview}
+          </p>
+
+          {/* BUTTONS (Ikon Sudah Bangkit Kembali!) */}
+          <div className="flex items-center gap-4 mt-3">
+            <button
+              onClick={() => navigate(`/movie/${movie?.id}`)}
+              className="bg-white text-black font-bold py-2 px-6 rounded flex items-center gap-2 hover:bg-gray-300 transition-colors cursor-pointer"
+            >
+              <HiPlay className="w-5 h-5" /> Play Now
+            </button>
+            <button
+              onClick={() => navigate(`/movie/${movie?.id}`)}
+              className="border border-white text-white font-bold py-2 px-6 rounded flex items-center gap-2 hover:bg-white/20 transition-colors bg-gray-900/50 backdrop-blur-sm cursor-pointer"
+            >
+              <HiOutlineInformationCircle className="w-5 h-5" /> More Info
+            </button>
+          </div>
         </div>
       </div>
     </div>
