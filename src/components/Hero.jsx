@@ -26,7 +26,7 @@ const Hero = ({ movie }) => {
         <div className="absolute w-full bottom-[5%] md:bottom-[8%] p-4 md:p-8 flex flex-col gap-4 z-20">
           {/* JUDUL FILM */}
           <h1
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-snug pb-2 line-clamp-2 md:line-clamp-3 w-full md:max-w-[70%]"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-snug pb-2.5 line-clamp-2 md:line-clamp-3 w-full md:max-w-[70%]"
             title={movie?.title}
           >
             {movie?.title}

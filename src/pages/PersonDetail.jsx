@@ -146,7 +146,7 @@ const PersonDetail = () => {
 
             {/* Deretan Film (Memanfaatkan komponen MovieRow yang sudah ada!) */}
             {credits.length > 0 && (
-              <div className="w-full -mx-4 md:mx-0">
+              <div className="-ml-4 md:-ml-6">
                 <MovieRow
                   title="Dikenal Atas"
                   moviesData={credits}

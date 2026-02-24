@@ -14,6 +14,7 @@ import {
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, setDoc, deleteDoc, getDoc } from "firebase/firestore";
+import toast from "react-hot-toast";
 
 const MovieDetail = () => {
   const { id } = useParams();
@@ -147,7 +148,8 @@ const MovieDetail = () => {
   // 4. FUNGSI SAKTI: Simpan / Hapus dari Cloud
   const toggleWatchlist = async () => {
     if (!user) {
-      alert("Nani?! Kamu harus login dulu untuk menyimpan film! 😠");
+      // UBAH: Alert kaku menjadi toast yang elegan
+      toast.error("Nani?! Kamu harus login dulu untuk menyimpan film! 😠");
       return;
     }
 
@@ -163,8 +165,11 @@ const MovieDetail = () => {
       try {
         await deleteDoc(movieRef);
         setIsSaved(false);
+        // TAMBAHAN: Feedback saat berhasil dihapus
+        toast.success("Film dihapus dari Watchlist! 🗑️");
       } catch (error) {
         console.error("Gagal menghapus:", error);
+        toast.error("Gagal menghapus dari Watchlist.");
       }
     } else {
       try {
@@ -177,8 +182,11 @@ const MovieDetail = () => {
           savedAt: new Date().toISOString(),
         });
         setIsSaved(true);
+        // TAMBAHAN: Feedback saat berhasil disimpan
+        toast.success("Berhasil ditambahkan ke Watchlist! 🍿");
       } catch (error) {
         console.error("Gagal menyimpan:", error);
+        toast.error("Gagal menyimpan ke Watchlist.");
       }
     }
   };

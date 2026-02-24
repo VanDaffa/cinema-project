@@ -7,6 +7,7 @@ import {
   HiBars3,
   HiArrowRightOnRectangle,
 } from "react-icons/hi2";
+import toast from "react-hot-toast";
 
 // === IMPORT FIREBASE ===
 import { auth, provider } from "../firebase";
@@ -66,8 +67,12 @@ const Navbar = () => {
   const handleLogin = async () => {
     try {
       await signInWithPopup(auth, provider);
+      // Tampilkan toast success saat login berhasil
+      toast.success("Login berhasil! Okaeri! 🎉");
     } catch (error) {
       console.error("Gagal Login:", error);
+      // Tampilkan toast error kalau batal/gagal
+      toast.error("Gagal login, silakan coba lagi!");
     }
   };
 
@@ -75,8 +80,11 @@ const Navbar = () => {
     try {
       await signOut(auth);
       setShowUserMenu(false);
+      // Tampilkan toast success saat logout berhasil
+      toast.success("Logout berhasil! Mata ne! 👋");
     } catch (error) {
       console.error("Gagal Logout:", error);
+      toast.error("Gagal logout!");
     }
   };
 

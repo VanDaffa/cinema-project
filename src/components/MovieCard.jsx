@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { HiHeart, HiOutlineHeart } from "react-icons/hi2";
+import toast from "react-hot-toast";
 
 // === IMPORT FIREBASE ===
 import { auth, db } from "../firebase";
@@ -48,10 +49,13 @@ const MovieCard = ({ movie }) => {
 
   // 3. Fungsi Tambah/Hapus via Ikon Hati
   const handleToggleWatchlist = async (e) => {
-    e.stopPropagation(); // MENCEGAH CARD DIKLIK SAAT KLIK HATI
+    e.stopPropagation();
 
     if (!user) {
-      alert("Kamu harus login dulu untuk menggunakan fitur Watchlist!");
+      // UBAH: Alert kaku menjadi toast
+      toast.error(
+        "Kamu harus login dulu untuk menggunakan fitur Watchlist! 🔒",
+      );
       return;
     }
 
@@ -67,8 +71,10 @@ const MovieCard = ({ movie }) => {
       try {
         await deleteDoc(movieRef);
         setIsSaved(false);
+        toast.success("Dihapus dari Watchlist! 🗑️"); // Feedback visual
       } catch (error) {
         console.error("Gagal menghapus dari watchlist:", error);
+        toast.error("Terjadi kesalahan.");
       }
     } else {
       try {
@@ -81,8 +87,10 @@ const MovieCard = ({ movie }) => {
           savedAt: new Date().toISOString(),
         });
         setIsSaved(true);
+        toast.success("Tersimpan di Watchlist! ❤️"); // Feedback visual
       } catch (error) {
         console.error("Gagal menyimpan ke watchlist:", error);
+        toast.error("Terjadi kesalahan.");
       }
     }
   };
