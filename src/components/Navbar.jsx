@@ -22,6 +22,7 @@ import {
   HiClock,
   HiFire,
 } from 'react-icons/hi2';
+import { getFriendlyAuthError } from '../utils/errorHandler';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -150,7 +151,7 @@ const Navbar = () => {
         setPersonResults((data.personResults || []).slice(0, 3));
       } catch (error) {
         console.error('Live search error:', error);
-        setSearchError('Gagal memuat hasil pencarian dari TMDB.');
+        setSearchError('Gagal memuat hasil pencarian. Periksa koneksimu.');
       } finally {
         setIsSearching(false);
       }
@@ -170,7 +171,10 @@ const Navbar = () => {
       toast.success('Login berhasil! Selamat datang kembali.');
     } catch (error) {
       console.error('Login error:', error);
-      toast.error(`Login gagal: ${error.code || error.message}`);
+      const friendlyMessage = getFriendlyAuthError(error);
+      if (friendlyMessage) {
+        toast.error(friendlyMessage);
+      }
     }
   };
 

@@ -24,3 +24,55 @@
     display: none;
   }
 }
+
+/* Smooth Scroll Global */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Animasi Transisi Halaman (GPU Composited: hanya transform & opacity) */
+@keyframes pageEnter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-page-enter {
+  animation: pageEnter 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: opacity, transform;
+}
+
+/* Indikator Loading Bar Atas saat Lazy-Load Halaman */
+@keyframes topProgress {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(-20%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.animate-top-progress {
+  animation: topProgress 0.8s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+/* Hormati pengaturan perangkat dengan mode hemat daya / kurangi gerakan */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-page-enter,
+  .animate-top-progress {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

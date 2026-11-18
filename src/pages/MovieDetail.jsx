@@ -22,6 +22,7 @@ import {
   HiTv,
   HiArrowTopRightOnSquare,
 } from 'react-icons/hi2';
+import { getFriendlyAuthError } from '../utils/errorHandler';
 
 const MovieDetail = () => {
   const { id } = useParams();
@@ -237,7 +238,9 @@ const MovieDetail = () => {
       if (successMessage) toast.success(successMessage);
     } catch (error) {
       console.error('Gagal menyimpan jurnal:', error);
-      toast.error('Terjadi kesalahan saat menyimpan ke Firestore.');
+      toast.error(
+        getFriendlyActionError(error, 'Gagal menyimpan perubahan ke jurnal. Silakan coba lagi.')
+      );
     } finally {
       setIsSavingJournal(false);
     }
@@ -280,7 +283,9 @@ const MovieDetail = () => {
       toast.success(`"${title}" dihapus dari koleksi.`);
     } catch (error) {
       console.error('Gagal menghapus dari koleksi:', error);
-      toast.error('Gagal menghapus data dari Firestore.');
+      toast.error(
+        getFriendlyActionError(error, 'Gagal menghapus tayangan dari koleksi.')
+      );
     } finally {
       setIsSavingJournal(false);
     }

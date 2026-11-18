@@ -1,42 +1,44 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { Suspense, lazy } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
+import PageTransition, { PageLoader } from './components/PageTransition';
 import HomeScreen from './pages/HomeScreen';
-import MovieDetail from './pages/MovieDetail';
-import SearchScreen from './pages/SearchScreen';
-import ActorDetail from './pages/ActorDetail';
-import WatchlistScreen from './pages/WatchlistScreen';
-import './index.css';
+
+// Code-Splitting: halaman diunduh secara dinamis hanya saat dikunjungi
+const SearchScreen = lazy(() => import('./pages/SearchScreen'));
+const WatchlistScreen = lazy(() => import('./pages/WatchlistScreen'));
+const MovieDetail = lazy(() => import('./pages/MovieDetail'));
+const ActorDetail = lazy(() => import('./pages/ActorDetail'));
 
 function App() {
   return (
     <AuthProvider>
-      <div className="app bg-[#0f172a] text-white min-h-screen font-['Poppins'] antialiased">
+      <Router>
         <Toaster
-          position="top-center"
+          position="bottom-right"
           toastOptions={{
             style: {
               background: '#1e293b',
               color: '#f8fafc',
               border: '1px solid #334155',
-              borderRadius: '12px',
-              fontSize: '14px',
+              fontSize: '0.875rem',
             },
           }}
         />
-        <Router>
-          <Routes>
-            <Route path="/" element={<HomeScreen />} />
-            <Route path="/movie/:id" element={<MovieDetail />} />
-            <Route path="/tv/:id" element={<MovieDetail />} />
-            <Route path="/search" element={<SearchScreen />} />
-            <Route path="/actor/:id" element={<ActorDetail />} />
-            <Route path="/watchlist" element={<WatchlistScreen />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Router>
-      </div>
+        <Suspense fallback={<PageLoader />}>
+          <PageTransition>
+            <Routes>
+              <Route path="/" element={<HomeScreen />} />
+              <Route path="/search" element={<SearchScreen />} />
+              <Route path="/watchlist" element={<WatchlistScreen />} />
+              <Route path="/movie/:id" element={<MovieDetail />} />
+              <Route path="/tv/:id" element={<MovieDetail />} />
+              <Route path="/actor/:id" element={<ActorDetail />} />
+            </Routes>
+          </PageTransition>
+        </Suspense>
+      </Router>
     </AuthProvider>
   );
 }
