@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import axios from '../services/tmdb';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import MovieCard from '../components/MovieCard';
-import { HiChevronLeft, HiChevronRight, HiUser } from 'react-icons/hi2';
+import React, { useState, useEffect, useRef } from "react";
+import { useParams, Link } from "react-router-dom";
+import axios from "../services/tmdb";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+import MovieCard from "../components/MovieCard";
+import { HiChevronLeft, HiChevronRight, HiUser } from "react-icons/hi2";
 
 const ActorDetail = () => {
   const { id } = useParams();
@@ -17,8 +17,6 @@ const ActorDetail = () => {
   const [isRightEnd, setIsRightEnd] = useState(false);
   const sliderRef = useRef(null);
 
-  const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
-
   useEffect(() => {
     window.scrollTo(0, 0);
     setShowFullBio(false);
@@ -28,8 +26,8 @@ const ActorDetail = () => {
       setLoading(true);
       try {
         const [personReq, moviesReq] = await Promise.all([
-          axios.get(`/person/${id}?api_key=${API_KEY}&language=en-US`),
-          axios.get(`/person/${id}/movie_credits?api_key=${API_KEY}&language=en-US`),
+          axios.get(`/person/${id}?language=en-US`),
+          axios.get(`/person/${id}/movie_credits?language=en-US`),
         ]);
 
         if (!isMounted) return;
@@ -50,7 +48,7 @@ const ActorDetail = () => {
 
         setMovies(sortedMovies);
       } catch (error) {
-        console.error('Gagal memuat profil pemeran:', error);
+        console.error("Gagal memuat profil pemeran:", error);
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -60,7 +58,7 @@ const ActorDetail = () => {
     return () => {
       isMounted = false;
     };
-  }, [id, API_KEY]);
+  }, [id]);
 
   const handleScroll = () => {
     if (!sliderRef.current) return;
@@ -75,12 +73,12 @@ const ActorDetail = () => {
 
   const slideLeft = () => {
     if (!sliderRef.current) return;
-    sliderRef.current.scrollBy({ left: -400, behavior: 'smooth' });
+    sliderRef.current.scrollBy({ left: -400, behavior: "smooth" });
   };
 
   const slideRight = () => {
     if (!sliderRef.current) return;
-    sliderRef.current.scrollBy({ left: 400, behavior: 'smooth' });
+    sliderRef.current.scrollBy({ left: 400, behavior: "smooth" });
   };
 
   if (loading) {
@@ -122,9 +120,11 @@ const ActorDetail = () => {
     );
   }
 
-  const bioText = person.biography || 'Belum ada informasi biografi untuk pemeran ini.';
+  const bioText =
+    person.biography || "Belum ada informasi biografi untuk pemeran ini.";
   const isLongBio = bioText.length > 480;
-  const displayedBio = showFullBio || !isLongBio ? bioText : `${bioText.slice(0, 480)}...`;
+  const displayedBio =
+    showFullBio || !isLongBio ? bioText : `${bioText.slice(0, 480)}...`;
 
   return (
     <div className="bg-[#0f172a] min-h-screen text-white flex flex-col">
@@ -154,35 +154,43 @@ const ActorDetail = () => {
 
               <div className="space-y-4 text-sm">
                 <div>
-                  <p className="text-slate-400 text-xs mb-0.5">Dikenal Sebagai</p>
+                  <p className="text-slate-400 text-xs mb-0.5">
+                    Dikenal Sebagai
+                  </p>
                   <p className="font-semibold text-slate-100">
-                    {person.known_for_department || '-'}
+                    {person.known_for_department || "-"}
                   </p>
                 </div>
                 <div>
                   <p className="text-slate-400 text-xs mb-0.5">Jenis Kelamin</p>
                   <p className="font-semibold text-slate-100">
                     {person.gender === 1
-                      ? 'Perempuan'
+                      ? "Perempuan"
                       : person.gender === 2
-                      ? 'Laki-laki'
-                      : '-'}
+                        ? "Laki-laki"
+                        : "-"}
                   </p>
                 </div>
                 <div>
                   <p className="text-slate-400 text-xs mb-0.5">Tanggal Lahir</p>
-                  <p className="font-semibold text-slate-100">{person.birthday || '-'}</p>
+                  <p className="font-semibold text-slate-100">
+                    {person.birthday || "-"}
+                  </p>
                 </div>
                 {person.deathday && (
                   <div>
-                    <p className="text-slate-400 text-xs mb-0.5">Tanggal Wafat</p>
-                    <p className="font-semibold text-slate-100">{person.deathday}</p>
+                    <p className="text-slate-400 text-xs mb-0.5">
+                      Tanggal Wafat
+                    </p>
+                    <p className="font-semibold text-slate-100">
+                      {person.deathday}
+                    </p>
                   </div>
                 )}
                 <div>
                   <p className="text-slate-400 text-xs mb-0.5">Tempat Lahir</p>
                   <p className="font-semibold text-slate-100">
-                    {person.place_of_birth || '-'}
+                    {person.place_of_birth || "-"}
                   </p>
                 </div>
               </div>
@@ -212,7 +220,7 @@ const ActorDetail = () => {
                   onClick={() => setShowFullBio((prev) => !prev)}
                   className="mt-3 text-sm font-semibold text-red-500 hover:text-red-400 transition-colors"
                 >
-                  {showFullBio ? 'Sembunyikan' : 'Baca Selengkapnya'}
+                  {showFullBio ? "Sembunyikan" : "Baca Selengkapnya"}
                 </button>
               )}
             </section>
@@ -222,7 +230,9 @@ const ActorDetail = () => {
               <section>
                 <div className="flex items-center gap-3 mb-4">
                   <span className="w-1 h-6 bg-red-600 rounded-full" />
-                  <h2 className="text-xl sm:text-2xl font-bold">Dikenal Atas</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold">
+                    Dikenal Atas
+                  </h2>
                 </div>
 
                 <div className="relative flex items-center">
@@ -243,7 +253,10 @@ const ActorDetail = () => {
                     className="flex items-stretch gap-4 overflow-x-auto scrollbar-hide py-2 w-full"
                   >
                     {movies.map((movie) => (
-                      <div key={movie.id} className="w-36 sm:w-40 md:w-44 shrink-0">
+                      <div
+                        key={movie.id}
+                        className="w-36 sm:w-40 md:w-44 shrink-0"
+                      >
                         <MovieCard movie={movie} />
                       </div>
                     ))}
