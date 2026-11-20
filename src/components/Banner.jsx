@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade } from 'swiper/modules';
-import axios, { requests, tmdbService } from '../services/tmdb';
+import axios, { requests, tmdbService } from '../services/tmdb';import { getDisplayTitle } from '../utils/title';
+
 import { HiPlay, HiInformationCircle, HiStar } from 'react-icons/hi2';
 
 import 'swiper/css';
@@ -77,7 +78,7 @@ const Banner = () => {
           const isTv =
             movie.media_type === 'tv' || Boolean(movie.first_air_date && !movie.release_date);
           const detailPath = isTv ? `/tv/${movie.id}` : `/movie/${movie.id}`;
-          const title = movie?.title || movie?.name || movie?.original_name;
+          const title = getDisplayTitle(movie);
           const releaseYear =
             movie?.release_date?.slice(0, 4) || movie?.first_air_date?.slice(0, 4) || 'TBA';
 

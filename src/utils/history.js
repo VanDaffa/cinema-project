@@ -1,3 +1,5 @@
+import { getDisplayTitle } from './title';
+
 const VIEWED_STORAGE_KEY = 'cinemaxii_recently_viewed';
 const SEARCH_STORAGE_KEY = 'cinemaxii_search_history';
 const MAX_VIEWED_ITEMS = 10;
@@ -27,7 +29,7 @@ export const addRecentlyViewed = (item) => {
     const normalizedItem = {
       id: item.id,
       media_type: mediaType,
-      title: item.title || item.name || 'Untitled',
+      title: getDisplayTitle(item),
       poster_path: item.poster_path || null,
       release_date: item.release_date || item.first_air_date || '',
       vote_average: item.vote_average || 0,

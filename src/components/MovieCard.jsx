@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import { useWatchlist } from '../context/WatchlistContext';
+import { useWatchlist } from '../context/WatchlistContext';import { getDisplayTitle } from '../utils/title';
+
 import { HiStar, HiHeart, HiOutlineHeart, HiCheckCircle } from 'react-icons/hi2';
 
 const MovieCard = ({ movie, mediaTypeOverride = '', className = '', onWatchlistChange = null }) => {
@@ -15,7 +16,7 @@ const MovieCard = ({ movie, mediaTypeOverride = '', className = '', onWatchlistC
     movie?.media_type ||
     (movie?.first_air_date && !movie?.release_date ? 'tv' : 'movie');
 
-  const title = movie?.title || movie?.name || 'Untitled';
+  const title = getDisplayTitle(movie);
   const releaseDate = movie?.release_date || movie?.first_air_date || '';
   const year = releaseDate ? releaseDate.split('-')[0] : 'TBA';
   const rating = movie?.vote_average ? movie.vote_average.toFixed(1) : 'N/A';

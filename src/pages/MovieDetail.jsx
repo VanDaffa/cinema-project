@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation, useSearchParams, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { tmdbService } from '../services/tmdb';
-import { addRecentlyViewed } from '../utils/history';
+import { addRecentlyViewed } from '../utils/history';import { getDisplayTitle, getSecondaryTitle } from '../utils/title';
+
 import { useAuth } from '../context/AuthContext';
 import { useWatchlist } from '../context/WatchlistContext';
 import Navbar from '../components/Navbar';
@@ -163,13 +164,13 @@ const MovieDetail = () => {
     updateScrollBounds(videoSliderRef, setIsVideoLeftEnd, setIsVideoRightEnd);
   }, [cast, videos, loading]);
 
-  const title = detail?.title || detail?.name || 'Untitled';
+  const title = getDisplayTitle(detail);
   const releaseDate = detail?.release_date || detail?.first_air_date || '';
-  const originalTitle = detail?.original_title || detail?.original_name || '';
-  const showOriginalTitle = originalTitle && originalTitle !== title;
+  // Judul pendamping: judul internasional untuk film Indonesia, judul asli untuk film asing
+  const secondaryTitle = getSecondaryTitle(detail);
   const localizedTitle = detail?.localizedTitle || '';
   const showLocalizedTitle =
-    localizedTitle && localizedTitle !== title && localizedTitle !== originalTitle;
+    localizedTitle && localizedTitle !== title && localizedTitle !== secondaryTitle;
   const releaseYear = releaseDate ? releaseDate.slice(0, 4) : 'TBA';
 
   // Simpan atau perbarui status Watchlist / Watched di Firestore
@@ -358,9 +359,9 @@ const MovieDetail = () => {
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-snug pb-2 tracking-tight">
               {title}
             </h1>
-            {showOriginalTitle && (
+            {secondaryTitle && (
               <p className="text-base sm:text-lg text-slate-400 font-medium -mt-1 mb-2">
-                {originalTitle}
+                {secondaryTitle}
               </p>
             )}
 

@@ -1,6 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { collection, deleteDoc, doc, onSnapshot, setDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { loadFirestore } from '../firebase';
 import { useAuth } from './AuthContext';
 
 const WatchlistContext = createContext(null);
@@ -20,6 +19,7 @@ export function WatchlistProvider({ children }) {
 
   // Satu listener untuk seluruh watchlist milik pengguna.
   // Menggantikan getDoc per kartu yang sebelumnya dipanggil berulang-ulang.
+  // Firestore diunduh hanya setelah pengguna login (lihat loadFirestore di firebase.js).
   useEffect(() => {
     if (!uid) {
       setEntries(new Map());
@@ -29,41 +29,60 @@ export function WatchlistProvider({ children }) {
 
     setLoading(true);
 
-    const unsubscribe = onSnapshot(
-      collection(db, 'users', uid, 'watchlist'),
-      (snapshot) => {
-        const next = new Map();
+    let cancelled = false;
+    let unsubscribe = () => {};
 
-        snapshot.docs.forEach((docItem) => {
-          const data = docItem.data();
-          const isTyped = TYPED_ID.test(docItem.id);
-          const mediaType = data.media_type || (isTyped ? docItem.id.split('_')[0] : 'movie');
-          const key = isTyped ? docItem.id : makeKey('movie', docItem.id);
+    loadFirestore()
+      .then(({ db, collection, onSnapshot }) => {
+        if (cancelled) return;
 
-          // Dokumen format baru selalu menang atas dokumen format lama
-          if (!isTyped && next.has(key)) return;
+        unsubscribe = onSnapshot(
+          collection(db, 'users', uid, 'watchlist'),
+          (snapshot) => {
+            const next = new Map();
 
-          next.set(key, {
-            ...data,
-            id: data.id ?? Number(docItem.id.split('_').pop()),
-            media_type: mediaType,
-            status: data.status || 'watchlist',
-            userRating: Number(data.userRating || 0),
-            review: data.review || '',
-          });
-        });
+            snapshot.docs.forEach((docItem) => {
+              const data = docItem.data();
+              const isTyped = TYPED_ID.test(docItem.id);
+              const mediaType =
+                data.media_type || (isTyped ? docItem.id.split('_')[0] : 'movie');
+              const key = isTyped ? docItem.id : makeKey('movie', docItem.id);
 
-        setEntries(next);
-        setLoading(false);
-      },
-      (error) => {
-        console.error('Gagal memuat watchlist:', error);
-        setEntries(new Map());
-        setLoading(false);
-      }
-    );
+              // Dokumen format baru selalu menang atas dokumen format lama
+              if (!isTyped && next.has(key)) return;
 
-    return unsubscribe;
+              next.set(key, {
+                ...data,
+                id: data.id ?? Number(docItem.id.split('_').pop()),
+                media_type: mediaType,
+                status: data.status || 'watchlist',
+                userRating: Number(data.userRating || 0),
+                review: data.review || '',
+              });
+            });
+
+            setEntries(next);
+            setLoading(false);
+          },
+          (error) => {
+            console.error('Gagal memuat watchlist:', error);
+            setEntries(new Map());
+            setLoading(false);
+          }
+        );
+      })
+      .catch((error) => {
+        console.error('Gagal memuat modul Firestore:', error);
+        if (!cancelled) {
+          setEntries(new Map());
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [uid]);
 
   // Daftar terurut dari yang terbaru ditambahkan (dipakai WatchlistScreen)
@@ -95,6 +114,7 @@ export function WatchlistProvider({ children }) {
       const key = makeKey(item.media_type, item.id);
       const existing = entries.get(key);
 
+      const { db, doc, setDoc } = await loadFirestore();
       await setDoc(doc(db, 'users', uid, 'watchlist', key), {
         id: item.id,
         media_type: item.media_type,
@@ -116,6 +136,7 @@ export function WatchlistProvider({ children }) {
     async (mediaType, id) => {
       if (!uid) throw new Error('Belum login');
 
+      const { db, doc, deleteDoc } = await loadFirestore();
       const jobs = [deleteDoc(doc(db, 'users', uid, 'watchlist', makeKey(mediaType, id)))];
       // Hapus juga dokumen format lama (ID numerik) khusus film
       if (mediaType === 'movie') {

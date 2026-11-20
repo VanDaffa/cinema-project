@@ -8,6 +8,29 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), tailwindcss()],
+    build: {
+      rolldownOptions: {
+        output: {
+          // Pisahkan library yang jarang berubah dari kode aplikasi, supaya browser bisa
+          // menyimpannya di cache walau kode aplikasi di-deploy ulang.
+          // Firestore sengaja TIDAK dimasukkan ke grup mana pun: ia dimuat lazy lewat import().
+          codeSplitting: {
+            groups: [
+              {
+                name: 'react-vendor',
+                test: /node_modules[\\/](react|react-dom|scheduler|react-router|react-router-dom|@remix-run)[\\/]/,
+                priority: 20,
+              },
+              {
+                name: 'firebase-core',
+                test: /node_modules[\\/](@firebase[\\/](app|auth|component|logger|util)|firebase[\\/](app|auth)|idb|tslib)[\\/]/,
+                priority: 10,
+              },
+            ],
+          },
+        },
+      },
+    },
     server: {
       proxy: {
         '/api/tmdb': {

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { tmdbService } from '../services/tmdb';
-import { addSearchHistory } from '../utils/history';
+import { addSearchHistory } from '../utils/history';import { getDisplayTitle } from '../utils/title';
+
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import MovieCard from '../components/MovieCard';
@@ -429,7 +430,7 @@ const SearchScreen = () => {
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
                 {items.map((person) => {
                   const knownForText = (person.known_for || [])
-                    .map((k) => k.title || k.name)
+                    .map((k) => getDisplayTitle(k, ''))
                     .filter(Boolean)
                     .slice(0, 2)
                     .join(', ');
@@ -557,12 +558,12 @@ const SearchScreen = () => {
             <div className="p-5 flex flex-col sm:flex-row gap-5 items-center sm:items-start">
               <img
                 src={`https://image.tmdb.org/t/p/w500${randomPick.poster_path}`}
-                alt={randomPick.title || randomPick.name}
+                alt={getDisplayTitle(randomPick)}
                 className="w-36 aspect-[2/3] object-cover rounded-xl shadow-lg border border-slate-700 shrink-0"
               />
               <div className="flex-1 text-center sm:text-left min-w-0">
                 <h3 className="text-xl font-bold text-white leading-snug">
-                  {randomPick.title || randomPick.name}
+                  {getDisplayTitle(randomPick)}
                 </h3>
                 <div className="flex items-center justify-center sm:justify-start gap-2.5 text-xs text-slate-300 mt-1.5 mb-3">
                   <span>

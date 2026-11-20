@@ -8,6 +8,7 @@ import {
   removeSearchHistoryItem,
   clearSearchHistory,
 } from '../utils/history';
+import { getDisplayTitle } from '../utils/title';
 import { useAuth } from '../context/AuthContext';
 import { auth, provider } from '../firebase';
 import { signInWithPopup, signOut } from 'firebase/auth';
@@ -279,7 +280,7 @@ const Navbar = () => {
                 <div className="space-y-1">
                   {trendingQuick.map((item) => {
                     const isTv = item.media_type === 'tv';
-                    const displayTitle = item.title || item.name;
+                    const displayTitle = getDisplayTitle(item);
                     return (
                       <button
                         key={`${item.media_type}_${item.id}`}
@@ -334,7 +335,7 @@ const Navbar = () => {
                   <div className="divide-y divide-slate-800/60">
                     {mediaResults.map((item) => {
                       const isTv = item.media_type === 'tv';
-                      const displayTitle = item.title || item.name;
+                      const displayTitle = getDisplayTitle(item);
                       const rawDate = item.release_date || item.first_air_date;
                       const year = rawDate ? rawDate.split('-')[0] : 'TBA';
 
@@ -397,7 +398,7 @@ const Navbar = () => {
                   <div className="divide-y divide-slate-800/60">
                     {personResults.map((person) => {
                       const knownForTitles = (person.known_for || [])
-                        .map((k) => k.title || k.name)
+                        .map((k) => getDisplayTitle(k, ''))
                         .filter(Boolean)
                         .slice(0, 2)
                         .join(', ');
