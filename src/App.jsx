@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
+import { WatchlistProvider } from './context/WatchlistContext';
 import PageTransition, { PageLoader } from './components/PageTransition';
 import HomeScreen from './pages/HomeScreen';
 
@@ -14,6 +15,7 @@ const ActorDetail = lazy(() => import('./pages/ActorDetail'));
 function App() {
   return (
     <AuthProvider>
+      <WatchlistProvider>
       <Router>
         <Toaster
           position="bottom-right"
@@ -39,6 +41,7 @@ function App() {
           </PageTransition>
         </Suspense>
       </Router>
+      </WatchlistProvider>
     </AuthProvider>
   );
 }

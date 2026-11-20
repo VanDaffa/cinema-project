@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade } from 'swiper/modules';
-import axios, { requests } from '../services/tmdb';
+import axios, { requests, tmdbService } from '../services/tmdb';
 import { HiPlay, HiInformationCircle, HiStar } from 'react-icons/hi2';
 
 import 'swiper/css';
@@ -21,8 +21,10 @@ const Banner = () => {
         const filtered = (request.data.results || [])
           .filter((item) => item.backdrop_path && item.media_type !== 'person')
           .slice(0, 5);
+        // Judul tetap internasional; sinopsis memakai bahasa Indonesia bila tersedia
+        const withOverview = await tmdbService.withLocalizedOverview(filtered);
         if (isMounted) {
-          setMovies(filtered);
+          setMovies(withOverview);
         }
       } catch (error) {
         console.error('Gagal memuat banner trending:', error);

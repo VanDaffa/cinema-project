@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
-import { db } from '../firebase';
 import { useAuth } from '../context/AuthContext';
+import { useWatchlist } from '../context/WatchlistContext';
 import { HiStar, HiHeart, HiOutlineHeart, HiCheckCircle } from 'react-icons/hi2';
 
 const MovieCard = ({ movie, mediaTypeOverride = '', className = '', onWatchlistChange = null }) => {
   const { user } = useAuth();
-  const [savedStatus, setSavedStatus] = useState(null); // null | 'watchlist' | 'watched'
+  const { getStatus, saveEntry, removeEntry } = useWatchlist();
   const [isSaving, setIsSaving] = useState(false);
 
   const mediaType =
@@ -21,47 +20,9 @@ const MovieCard = ({ movie, mediaTypeOverride = '', className = '', onWatchlistC
   const year = releaseDate ? releaseDate.split('-')[0] : 'TBA';
   const rating = movie?.vote_average ? movie.vote_average.toFixed(1) : 'N/A';
   const detailPath = mediaType === 'tv' ? `/tv/${movie.id}` : `/movie/${movie.id}`;
-  const docKey = `${mediaType}_${movie.id}`;
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const checkWatchlistStatus = async () => {
-      if (!user || !movie?.id) {
-        if (isMounted) setSavedStatus(null);
-        return;
-      }
-      try {
-        // Cek format ID baru (movie_123 / tv_123) terlebih dahulu
-        const typedRef = doc(db, 'users', user.uid, 'watchlist', docKey);
-        const typedSnap = await getDoc(typedRef);
-
-        if (typedSnap.exists()) {
-          if (isMounted) setSavedStatus(typedSnap.data()?.status || 'watchlist');
-          return;
-        }
-
-        // Fallback untuk data lama yang masih memakai ID numerik saja
-        if (mediaType === 'movie') {
-          const legacyRef = doc(db, 'users', user.uid, 'watchlist', String(movie.id));
-          const legacySnap = await getDoc(legacyRef);
-          if (legacySnap.exists() && isMounted) {
-            setSavedStatus(legacySnap.data()?.status || 'watchlist');
-            return;
-          }
-        }
-
-        if (isMounted) setSavedStatus(null);
-      } catch (error) {
-        console.error('Gagal memeriksa status watchlist:', error);
-      }
-    };
-
-    checkWatchlistStatus();
-    return () => {
-      isMounted = false;
-    };
-  }, [user, movie?.id, docKey, mediaType]);
+  // null | 'watchlist' | 'watched' (dibaca dari WatchlistContext, tanpa request per kartu)
+  const savedStatus = user && movie?.id ? getStatus(mediaType, movie.id) : null;
 
   const handleToggleWatchlist = async (e) => {
     e.preventDefault();
@@ -75,32 +36,23 @@ const MovieCard = ({ movie, mediaTypeOverride = '', className = '', onWatchlistC
     if (isSaving) return;
     setIsSaving(true);
 
-    const typedRef = doc(db, 'users', user.uid, 'watchlist', docKey);
-    const legacyRef = doc(db, 'users', user.uid, 'watchlist', String(movie.id));
-
     try {
       if (savedStatus) {
-        await Promise.all([
-          deleteDoc(typedRef),
-          mediaType === 'movie' ? deleteDoc(legacyRef) : Promise.resolve(),
-        ]);
-        setSavedStatus(null);
+        await removeEntry(mediaType, movie.id);
         toast.success(`"${title}" dihapus dari koleksi.`);
         if (onWatchlistChange) onWatchlistChange(movie.id, mediaType, null);
       } else {
-        await setDoc(typedRef, {
-          id: movie.id,
-          media_type: mediaType,
-          title,
-          poster_path: movie.poster_path || null,
-          release_date: releaseDate,
-          vote_average: movie.vote_average || 0,
-          status: 'watchlist',
-          userRating: 0,
-          review: '',
-          addedAt: new Date().toISOString(),
-        });
-        setSavedStatus('watchlist');
+        await saveEntry(
+          {
+            id: movie.id,
+            media_type: mediaType,
+            title,
+            poster_path: movie.poster_path,
+            release_date: releaseDate,
+            vote_average: movie.vote_average,
+          },
+          { status: 'watchlist' }
+        );
         toast.success(`"${title}" ditambahkan ke Watchlist.`);
         if (onWatchlistChange) onWatchlistChange(movie.id, mediaType, 'watchlist');
       }

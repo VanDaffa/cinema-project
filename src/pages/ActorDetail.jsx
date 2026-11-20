@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import axios from "../services/tmdb";
+import axios, { LANGUAGE, TITLE_LANGUAGE } from '../services/tmdb';
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import MovieCard from "../components/MovieCard";
@@ -26,13 +26,27 @@ const ActorDetail = () => {
       setLoading(true);
       try {
         const [personReq, moviesReq] = await Promise.all([
-          axios.get(`/person/${id}?language=en-US`),
-          axios.get(`/person/${id}/movie_credits?language=en-US`),
+          axios.get(`/person/${id}?language=${LANGUAGE}`),
+          axios.get(`/person/${id}/movie_credits?language=${TITLE_LANGUAGE}`),
         ]);
 
         if (!isMounted) return;
 
-        setPerson(personReq.data);
+        // Biografi bahasa Indonesia sering kosong -> pakai versi bahasa Inggris
+        let personData = personReq.data;
+        if (!personData?.biography) {
+          try {
+            const fallbackReq = await axios.get(`/person/${id}`, {
+              params: { language: TITLE_LANGUAGE },
+            });
+            personData = { ...personData, biography: fallbackReq.data?.biography || '' };
+          } catch (error) {
+            console.error('Gagal memuat biografi cadangan:', error);
+          }
+        }
+        if (!isMounted) return;
+
+        setPerson(personData);
 
         // Hapus duplikat film jika aktor memiliki peran ganda dan urutkan berdasarkan popularitas
         const uniqueMap = new Map();

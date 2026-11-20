@@ -1,6 +1,6 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const Footer = () => {
   const { user } = useAuth();
@@ -12,11 +12,15 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           {/* Brand & Deskripsi Singkat */}
           <div className="text-center md:text-left">
-            <Link to="/" className="text-red-500 font-extrabold text-xl tracking-wider">
+            <Link
+              to="/"
+              className="text-red-500 font-extrabold text-xl tracking-wider"
+            >
               CINEMAXII
             </Link>
             <p className="text-xs text-slate-500 mt-1.5 max-w-sm">
-              Platform eksplorasi katalog film, trailer resmi, profil pemeran, dan pengelolaan daftar tontonan personal.
+              Platform eksplorasi katalog film, trailer resmi, profil pemeran,
+              dan pengelolaan daftar tontonan personal.
             </p>
           </div>
 
@@ -29,16 +33,31 @@ const Footer = () => {
               Explore
             </Link>
             {user && (
-              <Link to="/watchlist" className="hover:text-white transition-colors">
+              <Link
+                to="/watchlist"
+                className="hover:text-white transition-colors"
+              >
                 Watchlist
               </Link>
             )}
           </div>
         </div>
 
-        <div className="border-t border-slate-800/70 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+        <div className="border-t border-slate-800/70 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
           <p>&copy; {currentYear} CINEMAXII. All rights reserved.</p>
-          <p>Data film dan gambar disediakan oleh TMDB API.</p>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <img
+              src="/tmdb-logo.svg"
+              alt="TMDB"
+              className="h-4 w-auto shrink-0"
+            />
+            <p className="text-center sm:text-right max-w-md">
+              This product uses TMDB and the TMDB APIs but is not endorsed,
+              certified, or otherwise approved by TMDB. Data ketersediaan
+              tayangan oleh JustWatch.
+            </p>
+          </div>
         </div>
       </div>
     </footer>

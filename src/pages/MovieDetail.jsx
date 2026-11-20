@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation, useSearchParams, Link } from 'react-router-dom';
-import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 import { tmdbService } from '../services/tmdb';
 import { addRecentlyViewed } from '../utils/history';
-import { db } from '../firebase';
 import { useAuth } from '../context/AuthContext';
+import { useWatchlist } from '../context/WatchlistContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import MovieCard from '../components/MovieCard';
@@ -23,6 +22,16 @@ import {
   HiArrowTopRightOnSquare,
 } from 'react-icons/hi2';
 import { getFriendlyAuthError } from '../utils/errorHandler';
+
+// Kode bahasa ISO (mis. "en") menjadi nama bahasa Indonesia (mis. "Inggris")
+const getLanguageName = (code) => {
+  if (!code) return '-';
+  try {
+    return new Intl.DisplayNames(['id'], { type: 'language' }).of(code) || code;
+  } catch {
+    return code;
+  }
+};
 
 const MovieDetail = () => {
   const { id } = useParams();
@@ -42,7 +51,6 @@ const MovieDetail = () => {
   const [loading, setLoading] = useState(true);
 
   // State Jurnal Tontonan Personal (Firestore)
-  const [journalStatus, setJournalStatus] = useState(null); // null | 'watchlist' | 'watched'
   const [userRating, setUserRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
   const [isSavingJournal, setIsSavingJournal] = useState(false);
@@ -57,6 +65,7 @@ const MovieDetail = () => {
   const videoSliderRef = useRef(null);
 
   const { user } = useAuth();
+  const { getEntry, saveEntry, removeEntry } = useWatchlist();
 
   // Ambil seluruh data detail dari TMDB
   useEffect(() => {
@@ -127,63 +136,19 @@ const MovieDetail = () => {
     }
   }, [loading, shouldAutoPlay, activeVideoKey]);
 
-  // Sinkronisasi status Watchlist / Watched / Rating Pribadi dari Firestore
+  // Status, rating, dan review tersimpan dibaca dari WatchlistContext
+  const journalEntry = detail?.id ? getEntry(mediaType, detail.id) : null;
+  const journalStatus = journalEntry?.status ?? null; // null | 'watchlist' | 'watched'
+  const savedRating = journalEntry?.userRating ?? 0;
+  const savedReview = journalEntry?.review ?? '';
+
+  // Sinkronkan draf rating & review dengan data tersimpan.
+  // Dependency berupa nilai primitif agar draf yang sedang diketik tidak
+  // tertimpa oleh perubahan lain pada watchlist.
   useEffect(() => {
-    let isMounted = true;
-
-    async function loadUserJournal() {
-      if (!user || !detail?.id) {
-        if (isMounted) {
-          setJournalStatus(null);
-          setUserRating(0);
-          setReviewText('');
-        }
-        return;
-      }
-
-      const docKey = `${mediaType}_${detail.id}`;
-      try {
-        const typedRef = doc(db, 'users', user.uid, 'watchlist', docKey);
-        const typedSnap = await getDoc(typedRef);
-
-        if (typedSnap.exists()) {
-          const d = typedSnap.data();
-          if (isMounted) {
-            setJournalStatus(d.status || 'watchlist');
-            setUserRating(d.userRating || 0);
-            setReviewText(d.review || '');
-          }
-          return;
-        }
-
-        // Cek format ID lama khusus film
-        if (mediaType === 'movie') {
-          const legacyRef = doc(db, 'users', user.uid, 'watchlist', String(detail.id));
-          const legacySnap = await getDoc(legacyRef);
-          if (legacySnap.exists() && isMounted) {
-            const d = legacySnap.data();
-            setJournalStatus(d.status || 'watchlist');
-            setUserRating(d.userRating || 0);
-            setReviewText(d.review || '');
-            return;
-          }
-        }
-
-        if (isMounted) {
-          setJournalStatus(null);
-          setUserRating(0);
-          setReviewText('');
-        }
-      } catch (error) {
-        console.error('Gagal memuat jurnal personal:', error);
-      }
-    }
-
-    loadUserJournal();
-    return () => {
-      isMounted = false;
-    };
-  }, [user, detail?.id, mediaType]);
+    setUserRating(savedRating);
+    setReviewText(savedReview);
+  }, [detail?.id, mediaType, savedRating, savedReview]);
 
   // Helper deteksi batas scroll carousel
   const updateScrollBounds = (ref, setLeft, setRight) => {
@@ -200,6 +165,11 @@ const MovieDetail = () => {
 
   const title = detail?.title || detail?.name || 'Untitled';
   const releaseDate = detail?.release_date || detail?.first_air_date || '';
+  const originalTitle = detail?.original_title || detail?.original_name || '';
+  const showOriginalTitle = originalTitle && originalTitle !== title;
+  const localizedTitle = detail?.localizedTitle || '';
+  const showLocalizedTitle =
+    localizedTitle && localizedTitle !== title && localizedTitle !== originalTitle;
   const releaseYear = releaseDate ? releaseDate.slice(0, 4) : 'TBA';
 
   // Simpan atau perbarui status Watchlist / Watched di Firestore
@@ -216,24 +186,20 @@ const MovieDetail = () => {
     if (isSavingJournal || !detail?.id) return;
 
     setIsSavingJournal(true);
-    const docKey = `${mediaType}_${detail.id}`;
-    const typedRef = doc(db, 'users', user.uid, 'watchlist', docKey);
 
     try {
-      await setDoc(typedRef, {
-        id: detail.id,
-        media_type: mediaType,
-        title,
-        poster_path: detail.poster_path || null,
-        release_date: releaseDate,
-        vote_average: detail.vote_average || 0,
-        status: nextStatus,
-        userRating: nextRating,
-        review: nextReview.trim(),
-        addedAt: new Date().toISOString(),
-      });
+      await saveEntry(
+        {
+          id: detail.id,
+          media_type: mediaType,
+          title,
+          poster_path: detail.poster_path,
+          release_date: releaseDate,
+          vote_average: detail.vote_average,
+        },
+        { status: nextStatus, userRating: nextRating, review: nextReview }
+      );
 
-      setJournalStatus(nextStatus);
       setUserRating(nextRating);
       if (successMessage) toast.success(successMessage);
     } catch (error) {
@@ -268,16 +234,8 @@ const MovieDetail = () => {
     if (!user || !detail?.id || isSavingJournal) return;
     setIsSavingJournal(true);
 
-    const docKey = `${mediaType}_${detail.id}`;
-    const typedRef = doc(db, 'users', user.uid, 'watchlist', docKey);
-    const legacyRef = doc(db, 'users', user.uid, 'watchlist', String(detail.id));
-
     try {
-      await Promise.all([
-        deleteDoc(typedRef),
-        mediaType === 'movie' ? deleteDoc(legacyRef) : Promise.resolve(),
-      ]);
-      setJournalStatus(null);
+      await removeEntry(mediaType, detail.id);
       setUserRating(0);
       setReviewText('');
       toast.success(`"${title}" dihapus dari koleksi.`);
@@ -400,6 +358,11 @@ const MovieDetail = () => {
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-snug pb-2 tracking-tight">
               {title}
             </h1>
+            {showOriginalTitle && (
+              <p className="text-base sm:text-lg text-slate-400 font-medium -mt-1 mb-2">
+                {originalTitle}
+              </p>
+            )}
 
             <div className="flex flex-wrap justify-center md:justify-start items-center gap-3 mt-1 mb-5 text-xs sm:text-sm text-slate-300 font-medium">
               <span className="bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-md text-white font-semibold">
@@ -513,6 +476,11 @@ const MovieDetail = () => {
               <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
                 {detail.overview || 'Sinopsis belum tersedia untuk tayangan ini.'}
               </p>
+              {detail.overviewLanguage === 'en' && (
+                <p className="text-xs text-slate-500 mt-3">
+                  Sinopsis bahasa Indonesia belum tersedia, menampilkan versi bahasa Inggris.
+                </p>
+              )}
             </section>
 
             {/* Pemutar Video & Galeri Klip */}
@@ -790,6 +758,7 @@ const MovieDetail = () => {
                     rows={3}
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
+                    maxLength={2000}
                     placeholder="Tulis kesanmu tentang tayangan ini..."
                     className="w-full bg-slate-800/90 text-white placeholder-slate-500 text-xs rounded-xl p-3 border border-slate-700 focus:outline-none focus:border-emerald-500 resize-none"
                   />
@@ -878,10 +847,18 @@ const MovieDetail = () => {
                     {detail.status || '-'}
                   </span>
                 </div>
+                {showLocalizedTitle && (
+                  <div className="flex justify-between gap-4 border-b border-slate-800/80 pb-3">
+                    <span className="text-slate-400">Judul Indonesia</span>
+                    <span className="font-semibold text-right text-slate-100">
+                      {localizedTitle}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between gap-4 border-b border-slate-800/80 pb-3">
                   <span className="text-slate-400">Bahasa Asli</span>
                   <span className="font-semibold uppercase text-right text-slate-100">
-                    {detail.original_language || '-'}
+                    {getLanguageName(detail.original_language)}
                   </span>
                 </div>
 

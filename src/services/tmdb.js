@@ -2,14 +2,22 @@ import axios from "axios";
 
 const BASE_URL = "/api/tmdb";
 
+// LANGUAGE      : bahasa untuk TEKS DESKRIPTIF (sinopsis, tagline, genre, biografi).
+// TITLE_LANGUAGE: bahasa untuk JUDUL dan data daftar. Judul adalah nama, bukan kalimat:
+//                 dipakai judul internasional (Inggris) agar mudah dikenali dan dicari,
+//                 bukan terjemahan harfiah ("Odisei") atau aksara asli saat terjemahan tidak ada.
+//                 Juga dipakai sebagai bahasa cadangan jika terjemahan Indonesia kosong.
+export const LANGUAGE = 'id-ID';
+export const TITLE_LANGUAGE = 'en-US';
+
 const instance = axios.create({
   baseURL: BASE_URL,
 });
 
 const requests = {
-  fetchTrending: `/trending/all/week?language=en-US`,
+  fetchTrending: `/trending/all/week?language=${TITLE_LANGUAGE}`,
   fetchNetflixOriginals: `/discover/tv?with_networks=213`,
-  fetchTopRated: `/movie/top_rated?language=en-US`,
+  fetchTopRated: `/movie/top_rated?language=${TITLE_LANGUAGE}`,
   fetchActionMovies: `/discover/movie?with_genres=28`,
   fetchComedyMovies: `/discover/movie?with_genres=35`,
   fetchHorrorMovies: `/discover/movie?with_genres=27`,
@@ -19,12 +27,33 @@ const requests = {
 };
 
 const tmdbService = {
+  // Item daftar datang dengan judul internasional + sinopsis Inggris. Untuk item yang diminta,
+  // ambil sinopsis bahasa Indonesia; bila kosong, sinopsis Inggris tetap dipakai.
+  withLocalizedOverview: async (items = []) =>
+    Promise.all(
+      items.map(async (item) => {
+        if (!item) return item;
+        const type = item.media_type === 'tv' ? 'tv' : 'movie';
+        try {
+          const res = await instance.get(`/${type}/${item.id}`, {
+            params: { language: LANGUAGE },
+          });
+          return res.data?.overview
+            ? { ...item, overview: res.data.overview, overviewLanguage: 'id' }
+            : item;
+        } catch (error) {
+          console.error('Gagal memuat sinopsis Indonesia:', error);
+          return item;
+        }
+      })
+    ),
+
   getGenres: async (mediaType = "movie") => {
     if (mediaType === "person") return [];
     const endpoint =
       mediaType === "tv" ? "/genre/tv/list" : "/genre/movie/list";
     const res = await instance.get(endpoint, {
-      params: { language: "en-US" },
+      params: { language: LANGUAGE },
     });
     return res.data.genres || [];
   },
@@ -32,7 +61,7 @@ const tmdbService = {
   // Trending harian singkat untuk Zero-Query Dropdown di Navbar
   getTrendingQuick: async () => {
     const res = await instance.get("/trending/all/day", {
-      params: { language: "en-US" },
+      params: { language: TITLE_LANGUAGE },
     });
     return (res.data.results || [])
       .filter((item) => item.media_type === "movie" || item.media_type === "tv")
@@ -46,7 +75,7 @@ const tmdbService = {
         query,
         page,
         include_adult: false,
-        language: "en-US",
+        language: TITLE_LANGUAGE,
       },
     });
 
@@ -79,7 +108,7 @@ const tmdbService = {
       query,
       page,
       include_adult: false,
-      language: "en-US",
+      language: TITLE_LANGUAGE,
     };
 
     if (year && mediaType !== "person") {
@@ -107,7 +136,7 @@ const tmdbService = {
       const res = await instance.get("/person/popular", {
         params: {
           page,
-          language: "en-US",
+          language: TITLE_LANGUAGE,
         },
       });
       return res.data;
@@ -118,7 +147,7 @@ const tmdbService = {
       page,
       sort_by: sortBy,
       include_adult: false,
-      language: "en-US",
+      language: TITLE_LANGUAGE,
       "vote_count.gte": sortBy === "vote_average.desc" ? 200 : 20,
     };
 
@@ -152,26 +181,47 @@ const tmdbService = {
     const candidates = (data.results || []).filter((item) => item.poster_path);
     if (candidates.length === 0) return null;
     const randomIndex = Math.floor(Math.random() * candidates.length);
-    return { ...candidates[randomIndex], media_type: mediaType };
+    const pick = { ...candidates[randomIndex], media_type: mediaType };
+    const [withOverview] = await tmdbService.withLocalizedOverview([pick]);
+    return withOverview;
   },
 
   getMediaDetail: async (mediaType = "movie", id) => {
     const prefix = mediaType === "tv" ? `/tv/${id}` : `/movie/${id}`;
-    const [detailRes, creditsRes, videosRes, recRes, providersRes] =
+    const [detailIdRes, detailEnRes, creditsRes, videosRes, recRes, providersRes] =
       await Promise.all([
-        instance.get(prefix, { params: { language: "en-US" } }),
-        instance.get(`${prefix}/credits`, { params: { language: "en-US" } }),
-        instance.get(`${prefix}/videos`, { params: { language: "en-US" } }),
+        // Indonesia: sinopsis, tagline, genre, status
+        instance.get(prefix, { params: { language: LANGUAGE } }),
+        // Internasional: judul + cadangan sinopsis bila terjemahan Indonesia kosong
+        instance.get(prefix, { params: { language: TITLE_LANGUAGE } }),
+        instance.get(`${prefix}/credits`, { params: { language: TITLE_LANGUAGE } }),
+        // Trailer: kebanyakan berbahasa Inggris
+        instance.get(`${prefix}/videos`, { params: { language: TITLE_LANGUAGE } }),
         instance.get(`${prefix}/recommendations`, {
-          params: { language: "en-US" },
+          params: { language: TITLE_LANGUAGE },
         }),
         instance.get(`${prefix}/watch/providers`),
       ]);
 
     const idProviders = providersRes.data?.results?.ID || null;
 
+    const detailId = detailIdRes.data || {};
+    const detailEn = detailEnRes.data || {};
+    const hasIndonesianOverview = Boolean(detailId.overview);
+
+    const detail = {
+      ...detailId,
+      // Judul utama: internasional. Judul versi Indonesia disimpan terpisah untuk ditampilkan sebagai info.
+      title: detailEn.title ?? detailId.title,
+      name: detailEn.name ?? detailId.name,
+      localizedTitle: detailId.title || detailId.name || '',
+      overview: hasIndonesianOverview ? detailId.overview : detailEn.overview || '',
+      tagline: hasIndonesianOverview ? detailId.tagline : detailEn.tagline || '',
+      overviewLanguage: hasIndonesianOverview ? 'id' : detailEn.overview ? 'en' : null,
+    };
+
     return {
-      detail: detailRes.data,
+      detail,
       cast: creditsRes.data?.cast || [],
       videos: videosRes.data?.results || [],
       recommendations: recRes.data?.results || [],
@@ -181,7 +231,7 @@ const tmdbService = {
 
   getCollection: async (collectionId) => {
     const res = await instance.get(`/collection/${collectionId}`, {
-      params: { language: "en-US" },
+      params: { language: TITLE_LANGUAGE },
     });
     const parts = (res.data?.parts || []).sort((a, b) => {
       const dateA = a.release_date

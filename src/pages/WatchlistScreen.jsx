@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
 import { useAuth } from '../context/AuthContext';
+import { useWatchlist } from '../context/WatchlistContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import MovieCard from '../components/MovieCard';
@@ -14,70 +13,14 @@ import {
 } from 'react-icons/hi2';
 
 const WatchlistScreen = () => {
-  const [entries, setEntries] = useState([]);
   const [activeTab, setActiveTab] = useState('watchlist'); // 'watchlist' | 'watched' | 'all'
-  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { items: entries, loading } = useWatchlist();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user) {
-      navigate('/');
-      return;
-    }
-
-    let isMounted = true;
-
-    async function fetchJournal() {
-      setLoading(true);
-      try {
-        const snapshot = await getDocs(collection(db, 'users', user.uid, 'watchlist'));
-        const items = snapshot.docs.map((docItem) => {
-          const data = docItem.data();
-          return {
-            ...data,
-            media_type: data.media_type || 'movie',
-            status: data.status || 'watchlist',
-            userRating: Number(data.userRating || 0),
-            review: data.review || '',
-          };
-        });
-
-        items.sort((a, b) => {
-          const timeA = new Date(a.addedAt || a.savedAt || 0).getTime();
-          const timeB = new Date(b.addedAt || b.savedAt || 0).getTime();
-          return timeB - timeA;
-        });
-
-        if (isMounted) {
-          setEntries(items);
-        }
-      } catch (error) {
-        console.error('Gagal memuat jurnal tontonan:', error);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    }
-
-    fetchJournal();
-    return () => {
-      isMounted = false;
-    };
+    if (!user) navigate('/');
   }, [user, navigate]);
-
-  const handleWatchlistChange = (itemId, itemMediaType, nextStatus) => {
-    if (!nextStatus) {
-      setEntries((prev) =>
-        prev.filter(
-          (item) =>
-            !(
-              String(item.id) === String(itemId) &&
-              (item.media_type || 'movie') === itemMediaType
-            )
-        )
-      );
-    }
-  };
 
   const watchlistItems = entries.filter((item) => item.status === 'watchlist');
   const watchedItems = entries.filter((item) => item.status === 'watched');
@@ -204,7 +147,6 @@ const WatchlistScreen = () => {
                 <MovieCard
                   movie={item}
                   mediaTypeOverride={item.media_type}
-                  onWatchlistChange={handleWatchlistChange}
                 />
 
                 {item.review && (

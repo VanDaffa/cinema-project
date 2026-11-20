@@ -1,20 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta name="description" content="CinemaXII" />
-    <link rel="apple-touch-icon" href="/logo192.png" />
+
+    <title>CinemaXII | Cari Film &amp; Serial TV</title>
+    <meta
+      name="description"
+      content="CinemaXII membantu kamu mencari film dan serial TV, menonton trailer, melihat pemeran, mengetahui tempat menonton, serta menyimpan watchlist dan jurnal tontonanmu."
+    />
+    <meta name="theme-color" content="#0f172a" />
+
+    <!-- Ikon & manifest -->
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
-    <title>CinemaXII</title>
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap");
-    </style>
+
+    <!-- Open Graph & Twitter (pratinjau saat link dibagikan) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="CinemaXII" />
+    <meta property="og:locale" content="id_ID" />
+    <meta property="og:title" content="CinemaXII | Cari Film &amp; Serial TV" />
+    <meta
+      property="og:description"
+      content="Cari film dan serial TV, tonton trailer, lihat tempat menonton, dan simpan watchlist-mu."
+    />
+    <meta property="og:url" content="https://cinemaxii.netlify.app/" />
+    <meta property="og:image" content="https://cinemaxii.netlify.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Font: dimuat lewat <link> (lebih cepat dari @import) dan memuat semua bobot yang dipakai -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+    />
   </head>
   <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <noscript>Aktifkan JavaScript untuk menjalankan aplikasi ini.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
