@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, EffectFade } from 'swiper/modules';
-import axios, { requests, tmdbService } from '../services/tmdb';import { getDisplayTitle } from '../utils/title';
+import axios, { requests, tmdbService } from '../services/tmdb';
+import { getDisplayTitle } from '../utils/title';
 
 import { HiPlay, HiInformationCircle, HiStar } from 'react-icons/hi2';
 

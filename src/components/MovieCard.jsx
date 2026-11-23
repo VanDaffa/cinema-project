@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import { useWatchlist } from '../context/WatchlistContext';import { getDisplayTitle } from '../utils/title';
+import { useWatchlist } from '../context/WatchlistContext';
+import { getDisplayTitle } from '../utils/title';
 
 import { HiStar, HiHeart, HiOutlineHeart, HiCheckCircle } from 'react-icons/hi2';
 

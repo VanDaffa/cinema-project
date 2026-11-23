@@ -38,13 +38,20 @@ html {
   }
   100% {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
+    transform: none;
   }
 }
 
+/*
+  PENTING: setelah animasi selesai, elemen ini TIDAK boleh tetap memiliki `transform`,
+  `will-change: transform`, atau efek animasi yang masih "menahan" (fill-mode `forwards`).
+  Elemen seperti itu menjadi acuan posisi bagi semua elemen `position: fixed` di dalamnya,
+  sehingga navbar ikut tergulung dan modal (mis. "Pilihkan Film Acak") muncul di tengah
+  halaman yang tinggi, di luar layar. Dengan `backwards`, elemen kembali ke gaya aslinya
+  begitu animasi selesai.
+*/
 .animate-page-enter {
-  animation: pageEnter 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  will-change: opacity, transform;
+  animation: pageEnter 0.38s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
 /* Indikator Loading Bar Atas saat Lazy-Load Halaman */
